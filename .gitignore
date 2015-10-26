@@ -1,0 +1,19 @@
+# Compiled C
+*.o
+*.so
+
+#Compiled Python
+*.pyc
+
+#Backup files
+*~
+
+#Latex files that aren't .tex
+*.aux
+*.log
+*.nav
+*.out
+*.pdf
+*.snm
+*.toc
+*.vrb

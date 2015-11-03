@@ -82,7 +82,7 @@ double comovingDistance(double z){
 	double Dh = 3000/h; // [Mpc]
 
 	// Perform the integration.
-	int numSteps = 1000;
+	int numSteps = 5000;
 	double stepsize = z/numSteps;
 	double curZ;
 	double sum = 0;
@@ -94,7 +94,7 @@ double comovingDistance(double z){
 	return Dh * sum;
 }
 
-cartesianGalaxy *convertCartesian(galaxy *gals, int numGals){
+cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 	// Declare the cartesian coordinate galaxy list.
 	cartesianGalaxy *cartGals = malloc(numGals * sizeof(cartesianGalaxy));
 
@@ -118,4 +118,56 @@ cartesianGalaxy *convertCartesian(galaxy *gals, int numGals){
 	}
 
 	return cartGals;
+}
+
+galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
+	int numGals){
+
+	// Declare the regular coordinate galaxy list.
+	galaxy *gals = malloc(numGals * sizeof(galaxy));
+
+	// Loop through each galaxy and perform root finding to calculate the
+	// redshift, using bisection.
+	int i;
+	#pragma omp parallel for
+	for(i = 0; i < numGals; i++){
+		double x = (cartGals+i)->x;
+		double y = (cartGals+i)->y;
+		double z = (cartGals+i)->z;
+
+		// Calculate the radial distance.
+		double r = pow(x*x+y*y+z*z,0.5);
+
+		double threshold = 1e-6;
+		double a = 0.01;
+		double b = 1;
+		double z_red, mid, fa, fmid;
+
+		// Perform the bisection root finding.
+		while(1){
+			mid = (a + b)/2.0;
+			fmid = comovingDistance(mid) - r;
+
+			// Check for convergence.
+			if(fabs(fmid) < threshold || (b-a)/2.0 < threshold){
+				z_red = mid;
+				break;
+			}
+
+			// Determine the new interval.
+			fa = comovingDistance(a) - r;
+			if((fa > 0 && fmid > 0) || (fa < 0 && fmid < 0)){
+				a = mid;
+			}else{
+				b = mid;
+			}
+		}
+
+		// Set the values for ra, dec, and z.
+		(gals+i)->ra = (origGals+i)->ra;
+		(gals+i)->dec = (origGals+i)->dec;
+		(gals+i)->z_red = z_red;
+	}
+
+	return gals;
 }

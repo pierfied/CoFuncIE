@@ -2,8 +2,8 @@
 #include "data_handler.c"
 
 int main(){
-	int numGals = getNumGals();
-	galaxy *gals = readData();
+	int numGals;
+	galaxy *gals = readData(&numGals);
 
 	printf("%d\n", numGals);
 
@@ -27,15 +27,23 @@ int main(){
 
 	printf("Max: %e\nMin: %e\nAvg: %e\n", maxZ, minZ, avgZ/numGals);*/
 
-	galaxy *newGals = convertFromCartesian(cartGals,gals,numGals);
+	//galaxy *newGals = convertFromCartesian(cartGals,gals,numGals);
+
+	double *r, *z;
+	int numInterpPts;
+	setupRedshiftInterp(&r, &z, &numInterpPts);
+	printf("Query = %f\n", interpRedshift(500, r, z, numInterpPts));
+	printf("Query = %f\n", interpDist(0.033, r, z, numInterpPts));
+
+	galaxy *trimmedGals = trimGalaxyList(gals, &numGals);
 
 	FILE *fp;
-	fp = fopen("newGals.csv", "w");
+	fp = fopen("trimmedGals.csv", "w");
 
 	for(i = 0; i < numGals; i++){
-		fprintf(fp, "%e, %e, %e\n", newGals->ra, newGals->dec,
-			newGals->z_red);
-		newGals++;
+		fprintf(fp, "%e, %e, %e\n", trimmedGals->ra, trimmedGals->dec,
+			trimmedGals->z_red);
+		trimmedGals++;
 	}
 	fclose(fp);
 }

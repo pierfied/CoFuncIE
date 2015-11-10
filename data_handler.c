@@ -15,7 +15,7 @@ typedef struct {
 	double z;
 } cartesianGalaxy;
 
-int getNumGals(){
+galaxy *readData(int *numGals){
 	// Open the file containing the location of the dataset.
 	char *fname = "data_loc";
 	FILE *fp;
@@ -28,41 +28,19 @@ int getNumGals(){
 
 	// Open the file containing the dataset and get the number of galxies.
 	fp = fopen(loc, "r");
-	int numGals = 0;
+	*numGals = 0;
 	while(fgets(loc, sizeof(loc), fp) != NULL){
-		numGals++;
-	}
-	fclose(fp);
-
-	return numGals;
-}
-
-galaxy *readData(){
-	// Open the file containing the location of the dataset.
-	char *fname = "data_loc";
-	FILE *fp;
-	fp = fopen(fname, "r");
-
-	// Read in the location of the dataset.
-	char loc[100];
-	fscanf(fp, "%s", loc);
-	fclose(fp);
-
-	// Open the file containing the dataset and get the number of galxies.
-	fp = fopen(loc, "r");
-	int numGals = 0;
-	while(fgets(loc, sizeof(loc), fp) != NULL){
-		numGals++;
+		(*numGals)++;
 	}
 	rewind(fp);
 
 	// Declare the galaxy list.
-	galaxy *gals = malloc(numGals * sizeof(galaxy));
+	galaxy *gals = malloc(*numGals * sizeof(galaxy));
 
 	// Read in the galaxies.
 	int i;
 	galaxy *curGal = gals;
-	for(i = 0; i < numGals; i++){
+	for(i = 0; i < *numGals; i++){
 		fscanf(fp, "%le, %le, %le", &(curGal->ra), &(curGal->dec),
 			&(curGal->z_red));
 		curGal++;
@@ -92,6 +70,55 @@ double comovingDistance(double z){
 	}
 
 	return Dh * sum;
+}
+
+void setupRedshiftInterp(double **r, double **z, int *numInterpPts){
+	// Define various parameters.
+	*numInterpPts = 101;
+	*r = malloc(*numInterpPts * sizeof(double));
+	*z = malloc(*numInterpPts * sizeof(double));
+	double zMin = 0;
+	double zMax = 1;
+	double stepsize = (zMax - zMin)/(*numInterpPts - 1);
+
+	// Set the values at r = 0.
+	**r = 0;
+	**z = 0;
+
+	// Loop through each interpolation point and calculate the value of z.
+	int i;
+	for(i = 1; i < *numInterpPts; i++){
+		*(*z+i) = zMin + i * stepsize;
+		*(*r+i) = comovingDistance(*(*z+i));
+	}
+}
+
+double interpRedshift(double rQuery, double *r, double *z, int numInterpPts){
+	// Perform linear interpolation for the redshift at the query radius.
+	int i;
+	for(i = 0; i < (numInterpPts - 1); i++){
+		if(*(r+i+1) > rQuery){
+			double zInterp = *(z+i)
+				+ (*(z+i+1) - *(z+i))*(rQuery - *(r+i))/(*(r+i+1) - *(r+i));
+			return zInterp;
+		}
+	}
+
+	return -1;
+}
+
+double interpDist(double zQuery, double *r, double *z, int numInterpPts){
+	// Perform linear interpolation for the redshift at the query radius.
+	int i;
+	for(i = 0; i < (numInterpPts - 1); i++){
+		if(*(z+i+1) > zQuery){
+			double zInterp = *(r+i)
+				+ (*(r+i+1) - *(r+i))*(zQuery - *(z+i))/(*(z+i+1) - *(z+i));
+			return zInterp;
+		}
+	}
+
+	return -1;
 }
 
 cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
@@ -170,4 +197,59 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 	}
 
 	return gals;
+}
+
+galaxy *trimGalaxyList(galaxy *gals, int *numGals){
+	// Read in the specifications for trimming the galaxies.
+	FILE *fp;
+	fp = fopen("bounds.conf", "r");
+	int xOutMin, xInMin, xInMax, xOutMax;
+	int yOutMin, yInMin, yInMax, yOutMax;
+	int zOutMin, zInMin, zInMax, zOutMax;
+	int voxelLength;
+	fscanf(fp, "X = %d %d %d %d\n", &xOutMin, &xInMin, &xInMax, &xOutMax);
+	fscanf(fp, "Y = %d %d %d %d\n", &yOutMin, &yInMin, &yInMax, &yOutMax);
+	fscanf(fp, "Z = %d %d %d %d\n", &zOutMin, &zInMin, &zInMax, &zOutMax);
+	fscanf(fp, "Voxel Length = %d", &voxelLength);
+	fclose(fp);
+
+	// Convert the galaxy list to cartesian coordinates.
+	cartesianGalaxy *cartGals = convertToCartesian(gals, *numGals);
+
+	// Loop through each galaxy and check that it is within the outer bounds.
+	// If so mark it as 1, otherwise 0.
+	int *index = malloc(*numGals * sizeof(int));
+	int i;
+	int sum = 0;
+	for(i = 0; i < *numGals; i++){
+		if(((cartGals+i)->x >= xOutMin && (cartGals+i)->x <= xOutMax) &&
+			((cartGals+i)->y >= yOutMin && (cartGals+i)->y <= yOutMax) &&
+			((cartGals+i)->z >= zOutMin && (cartGals+i)->z <= zOutMax)){
+			
+			*(index+i) = 1;
+			sum++;
+		}else{
+			*(index+i) = 0;
+		}
+	}
+
+	// Create a new list of galaxies from the trimmed subset.
+	galaxy *trimmedGals = malloc(sum * sizeof(galaxy));
+	galaxy *curGal = trimmedGals;
+	for(i = 0; i < *numGals; i++){
+		if(*(index+i)){
+			curGal->ra = (gals+i)->ra;
+			curGal->dec = (gals+i)->dec;
+			curGal->z_red = (gals+i)->z_red;
+			curGal++;
+		}
+	}
+
+	// Free up the old cartesian galaxy list.
+	free(cartGals);
+
+	// Update the number of galaxies.
+	*numGals = sum;
+
+	return trimmedGals;
 }

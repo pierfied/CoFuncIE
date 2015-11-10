@@ -17,3 +17,6 @@
 *.snm
 *.toc
 *.vrb
+
+#CoFuncIE executable
+*.cfie

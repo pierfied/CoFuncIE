@@ -16,10 +16,5 @@ cartesianGalaxy* convertToCartesian(galaxy* gals, int numGals);
 galaxy* convertFromCartesian(cartesianGalaxy* cartGals, galaxy* origGals,int numGals);
 galaxy *trimGalaxyList(galaxy *gals, int *numGals);
 
-//TODO: These functions should be moved to the cosmology.c program
-double comovingDistance(double z);
-void setupRedshiftInterp(double* *r, double* *z, int* numInterpPts);
-double interpRedshift(double rQuery, double* r, double* z, int numInterpPts);
-double interpDist(double zQuery, double* r, double* z, int numInterpPts);
 
 #endif

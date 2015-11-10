@@ -57,6 +57,22 @@ void setupRedshiftInterp(double **r, double **z, int *numInterpPts){
 	}
 }
 
+/*
+  TOM NOTE:
+  The function below is the way to do this in general, and is the only way to
+  do this if the radial bins are not linearly spaced (i.e. logarithmic).
+  However, if the bins are logarithmically spaced then we can do something
+  like the following.
+
+  double delta_r = (r[Max]-r[Min])/numInterpPts;
+  int i = rQuery/delta_r; //i will be the index we are looking for
+  double zInterp = *(z+i)
+  + (*(z+i+1) - *(z+i))*(rQuery - *(r+i))/(*(r+i+1) - *(r+i));
+  return zInterp;
+
+  This would alleviate the need for a loop, which might become costly 
+  when we do this for a huge number of galaxies.
+*/
 double interpRedshift(double rQuery, double *r, double *z, int numInterpPts){
 	// Perform linear interpolation for the redshift at the query radius.
 	int i;

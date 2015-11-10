@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "data_handler.c"
+#include "data_handler.h"
+#include "galaxy_structs.h"
 
 int main(){
 	int numGals;
@@ -38,7 +39,7 @@ int main(){
 	galaxy *trimmedGals = trimGalaxyList(gals, &numGals);
 
 	FILE *fp;
-	fp = fopen("trimmedGals.csv", "w");
+	fp = fopen("Catalogues/trimmedGals.csv", "w");
 
 	for(i = 0; i < numGals; i++){
 		fprintf(fp, "%e, %e, %e\n", trimmedGals->ra, trimmedGals->dec,

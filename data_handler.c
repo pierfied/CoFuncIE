@@ -1,19 +1,13 @@
-#include <stdio.h>
-#include <math.h>
+/*
+  This file contains functions used to read in galaxy data 
+  from a catalogue, trim the catalogue, and convert it to 
+  cartesian coordinates.
+*/
+
+
+#include "data_handler.h"
 
 #define PI 3.14159265359
-
-typedef struct{
-	double ra;
-	double dec;
-	double z_red;
-} galaxy;
-
-typedef struct {
-	double x;
-	double y;
-	double z;
-} cartesianGalaxy;
 
 galaxy *readData(int *numGals){
 	// Open the file containing the location of the dataset.
@@ -53,21 +47,30 @@ galaxy *readData(int *numGals){
 
 double comovingDistance(double z){
 	// Define various cosmological constants.
-	double M = 0.3;
-	double k = 0;
-	double lambda = 0.7;
-	double h = 0.7;
+	double M = cosmo_M;
+	double k = cosmo_k;
+	double lambda = cosmo_lambda;
+	double h = cosmo_h;
 	double Dh = 3000/h; // [Mpc]
 
 	// Perform the integration.
 	int numSteps = 5000;
 	double stepsize = z/numSteps;
 	double curZ;
+	double fx, fxdx;
 	double sum = 0;
 	for(curZ = 0; curZ < z; curZ += stepsize){
-		sum += stepsize / sqrt(M*pow(1+curZ,3)
-			+ k*pow(1+curZ,2) + lambda);
+	  fx = 1./sqrt(M*pow(1+curZ,3)
+		       + k*pow(1+curZ,2) + lambda);
+	  fxdx = 1./sqrt(M*pow(1+curZ+stepsize,3) 
+			 + k*pow(1+curZ+stepsize,2) + lambda);
+	  sum += stepsize/2.*(fx+fxdx);
 	}
+
+	// Error is proportional to this factor
+	// We can choose to print this out if we want
+	double error = -Dh*z*z*z/(12*numSteps*numSteps);
+	//printf("Error in comoving distance integration = %f\n",error);
 
 	return Dh * sum;
 }

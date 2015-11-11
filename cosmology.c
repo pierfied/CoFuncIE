@@ -88,6 +88,11 @@ double interpRedshift(double rQuery, double *r, double *z, int numInterpPts){
 }
 
 double interpDist(double zQuery, double *r, double *z, int numInterpPts){
+	// Check that the query point is within the bounds.
+	if(zQuery > *(z + numInterpPts - 1)){
+		return -1;
+	}
+
 	// Perform linear interpolation for the redshift at the query radius.
 	double dz = (*(z+numInterpPts-1) - *z)/(numInterpPts-1);
 	int i = zQuery/dz;

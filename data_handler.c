@@ -48,6 +48,11 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 	// Declare the cartesian coordinate galaxy list.
 	cartesianGalaxy *cartGals = malloc(numGals * sizeof(cartesianGalaxy));
 
+	// Setup the interpolator.
+	double *rs, *zs;
+	int numInterpPts;
+	setupRedshiftInterp(&rs, &zs, &numInterpPts);
+
 	// Loop through each galaxy in parallel and convert to cartesian
 	// coordinates.
 	int i;
@@ -59,7 +64,7 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 		double theta = PI/2.0 - (gals+i)->dec * (PI/180);
 
 		// Calculate the line of sight distance.
-		double r = comovingDistance((gals+i)->z_red);
+		double r = interpDist((gals+i)->z_red, rs, zs, numInterpPts);
 
 		// Set the x, y, and z coordinates.
 		(cartGals+i)->x = r * sin(theta) * cos(phi);
@@ -76,6 +81,11 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 	// Declare the regular coordinate galaxy list.
 	galaxy *gals = malloc(numGals * sizeof(galaxy));
 
+	// Setup the interpolator.
+	double *rs, *zs;
+	int numInterpPts;
+	setupRedshiftInterp(&rs, &zs, &numInterpPts);
+
 	// Loop through each galaxy and perform root finding to calculate the
 	// redshift, using bisection.
 	int i;
@@ -88,35 +98,10 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 		// Calculate the radial distance.
 		double r = pow(x*x+y*y+z*z,0.5);
 
-		double threshold = 1e-6;
-		double a = 0.01;
-		double b = 1;
-		double z_red, mid, fa, fmid;
-
-		// Perform the bisection root finding.
-		while(1){
-			mid = (a + b)/2.0;
-			fmid = comovingDistance(mid) - r;
-
-			// Check for convergence.
-			if(fabs(fmid) < threshold || (b-a)/2.0 < threshold){
-				z_red = mid;
-				break;
-			}
-
-			// Determine the new interval.
-			fa = comovingDistance(a) - r;
-			if((fa > 0 && fmid > 0) || (fa < 0 && fmid < 0)){
-				a = mid;
-			}else{
-				b = mid;
-			}
-		}
-
 		// Set the values for ra, dec, and z.
 		(gals+i)->ra = (origGals+i)->ra;
 		(gals+i)->dec = (origGals+i)->dec;
-		(gals+i)->z_red = z_red;
+		(gals+i)->z_red = interpRedshift(r, rs, zs, numInterpPts);
 	}
 
 	return gals;

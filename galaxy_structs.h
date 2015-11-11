@@ -27,3 +27,4 @@ typedef struct {
 } cartesianGalaxy;
 
 #endif
+

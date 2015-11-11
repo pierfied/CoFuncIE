@@ -2,11 +2,11 @@ EXEC = main.cfie
 
 OBJS = main.o data_handler.o cosmology.o
 
-CC = gcc
+CC = icc
 
-CFLAGS = 
+CFLAGS = -openmp -lm
 
-OFLAGS = -lm
+OFLAGS = -openmp -lm
 
 INCL = 
 
@@ -15,10 +15,10 @@ LIBS =
 .SUFFIXES:.c.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCL) -c $< -o $@
+	$(CC) $(INCL) -c $< -o $@ $(CFLAGS)
 
 $(EXEC): $(OBJS)
-	$(CC) $(OFLAGS) $(OBJS) $(LIBS) -o $(EXEC)
+	$(CC) $(OBJS) $(LIBS) -o $(EXEC) $(OFLAGS)
 	rm $(OBJS)
 
 .PHONY: clean

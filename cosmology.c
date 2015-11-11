@@ -89,14 +89,10 @@ double interpRedshift(double rQuery, double *r, double *z, int numInterpPts){
 
 double interpDist(double zQuery, double *r, double *z, int numInterpPts){
 	// Perform linear interpolation for the redshift at the query radius.
-	int i;
-	for(i = 0; i < (numInterpPts - 1); i++){
-		if(*(z+i+1) > zQuery){
-			double zInterp = *(r+i)
-				+ (*(r+i+1) - *(r+i))*(zQuery - *(z+i))/(*(z+i+1) - *(z+i));
-			return zInterp;
-		}
-	}
+	double dz = (*(z+numInterpPts-1) - *z)/(numInterpPts-1);
+	int i = zQuery/dz;
+	double zInterp = *(r+i) 
+		+ (*(r+i+1) - *(r+i))*(zQuery - *(z+i))/(*(z+i+1) - *(z+i));
 
-	return -1;
+	return zInterp;
 }

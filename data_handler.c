@@ -34,8 +34,8 @@ galaxy *readData(int *numGals){
 	int i;
 	galaxy *curGal = gals;
 	for(i = 0; i < *numGals; i++){
-		fscanf(fp, "%le, %le, %le", &(curGal->ra), &(curGal->dec),
-			&(curGal->z_red));
+		fscanf(fp, "%le, %le, %le, %le", &(curGal->ra), &(curGal->dec),
+			&(curGal->z_red), &(curGal->z_err));
 		curGal++;
 	}
 	fclose(fp);
@@ -102,6 +102,7 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 		(gals+i)->ra = (origGals+i)->ra;
 		(gals+i)->dec = (origGals+i)->dec;
 		(gals+i)->z_red = interpRedshift(r, rs, zs, numInterpPts);
+		(gals+i)->z_err = (origGals+i)->z_err;
 	}
 
 	return gals;
@@ -149,6 +150,7 @@ galaxy *trimGalaxyList(galaxy *gals, int *numGals){
 			curGal->ra = (gals+i)->ra;
 			curGal->dec = (gals+i)->dec;
 			curGal->z_red = (gals+i)->z_red;
+			curGal->z_err = (gals+i)->z_err;
 			curGal++;
 		}
 	}

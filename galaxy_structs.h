@@ -18,6 +18,7 @@ typedef struct{
 	double ra;
 	double dec;
 	double z_red;
+	double z_err;
 } galaxy;
 
 typedef struct {

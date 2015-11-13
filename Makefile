@@ -11,8 +11,8 @@ OFLAGS = -openmp -lm
 endif
 else
 CC = gcc
-CFLAGS = 
-OFLAGS = -lm
+CFLAGS = -fopenmp
+OFLAGS = -fopenmp -lm
 endif
 
 INCL = 

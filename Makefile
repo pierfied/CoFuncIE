@@ -2,11 +2,18 @@ EXEC = main.cfie
 
 OBJS = main.o data_handler.o cosmology.o
 
+ifdef COMPILER
+ifeq ($(COMPILER),intel)
+$(info Using intel compiler.)
+CC = icc
+CFLAGS = -openmp -lm
+OFLAGS = -openmp -lm
+endif
+else
 CC = gcc
-
 CFLAGS = 
-
 OFLAGS = -lm
+endif
 
 INCL = 
 
@@ -25,4 +32,4 @@ $(EXEC): $(OBJS)
 
 clean:
 	-rm -f $(OBJS) $(EXEC) *~
-	-rm Objects/*.o
+	-rm -f Objects/*.o

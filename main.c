@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "data_handler.h"
+#include "galaxy_structs.h"
 
 int main(){
 	int numGals;

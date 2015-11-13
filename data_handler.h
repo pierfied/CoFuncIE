@@ -11,6 +11,7 @@
 #include "galaxy_structs.h"
 
 #ifndef HANDLER_H
+#define HANDLER_H
 
 galaxy* readData(int* numGals);
 cartesianGalaxy* convertToCartesian(galaxy* gals, int numGals);

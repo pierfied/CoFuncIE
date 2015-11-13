@@ -12,6 +12,7 @@
 #include <math.h>
 
 #ifndef COSMOLOGY_H
+#define COSMOLOGY_H
 
 #define cosmo_M 0.3
 #define cosmo_k 0.0

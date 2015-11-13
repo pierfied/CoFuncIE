@@ -1,12 +1,12 @@
 EXEC = main.cfie
 
-OBJS = main.o data_handler.o cosmology.o
+OBJS = main.o data_handler.o cosmology.o density_map.o
 
 ifdef COMPILER
 ifeq ($(COMPILER),intel)
 $(info Using intel compiler.)
 CC = icc
-CFLAGS = -openmp -lm
+CFLAGS = -openmp
 OFLAGS = -openmp -lm
 endif
 else

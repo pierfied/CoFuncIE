@@ -16,7 +16,9 @@
 galaxy* readData(int* numGals);
 cartesianGalaxy* convertToCartesian(galaxy* gals, int numGals);
 galaxy* convertFromCartesian(cartesianGalaxy* cartGals, galaxy* origGals,int numGals);
-galaxy *trimGalaxyList(galaxy *gals, int *numGals);
+//galaxy *trimGalaxyList(galaxy *gals, int *numGals);
+galaxy *trimGalaxyList(galaxy *gals, int *numGals, int xStart, int yStart,
+	int zStart, int boxLength);
 
 
 #endif

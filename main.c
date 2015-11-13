@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "data_handler.h"
 #include "galaxy_structs.h"
+#include "density_map.h"
 
 int main(){
 	int numGals;
@@ -36,8 +37,24 @@ int main(){
 	printf("Query = %f\n", interpRedshift(500, r, z, numInterpPts));
 	printf("Query = %f\n", interpDist(0.033, r, z, numInterpPts));
 
-	galaxy *trimmedGals = trimGalaxyList(gals, &numGals);
+	int xStart = 600;
+	int yStart = 0;
+	int zStart = 0;
+	int numVoxelsPerDim = 12;
+	int boxLength = 400;
 
+	galaxy *trimmedGals = trimGalaxyList(gals, &numGals, xStart, yStart,
+		zStart, boxLength);
+
+	double *voxels = generateMap(trimmedGals, numGals, numVoxelsPerDim,
+		xStart, yStart, zStart, boxLength);
+
+	for(i = 0; i < numVoxelsPerDim; i++){
+		printf("%f\n", *(voxels+i));
+	}
+
+
+	/*
 	FILE *fp;
 	fp = fopen("Catalogues/trimmedGals.csv", "w");
 
@@ -47,4 +64,5 @@ int main(){
 		trimmedGals++;
 	}
 	fclose(fp);
+	*/
 }

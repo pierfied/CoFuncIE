@@ -108,6 +108,55 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 	return gals;
 }
 
+galaxy *trimGalaxyList(galaxy *gals, int *numGals, int xStart, int yStart,
+	int zStart, int boxLength){
+
+	// Convert the galaxy list to cartesian coordinates.
+	cartesianGalaxy *cartGals = convertToCartesian(gals, *numGals);
+
+	// Loop through each galaxy and check that it is within the outer bounds.
+	// If so mark it as 1, otherwise 0.
+	int *index = malloc(*numGals * sizeof(int));
+	int i;
+	int sum = 0;
+	for(i = 0; i < *numGals; i++){
+		if(((cartGals+i)->x >= xStart &&
+				(cartGals+i)->x <= (xStart + boxLength)) &&
+			((cartGals+i)->y >= yStart &&
+				(cartGals+i)->y <= (yStart + boxLength)) &&
+			((cartGals+i)->z >= zStart &&
+				(cartGals+i)->z <= (zStart + boxLength))){
+			
+			*(index+i) = 1;
+			sum++;
+		}else{
+			*(index+i) = 0;
+		}
+	}
+
+	// Create a new list of galaxies from the trimmed subset.
+	galaxy *trimmedGals = malloc(sum * sizeof(galaxy));
+	galaxy *curGal = trimmedGals;
+	for(i = 0; i < *numGals; i++){
+		if(*(index+i)){
+			curGal->ra = (gals+i)->ra;
+			curGal->dec = (gals+i)->dec;
+			curGal->z_red = (gals+i)->z_red;
+			curGal->z_err = (gals+i)->z_err;
+			curGal++;
+		}
+	}
+
+	// Free up the old cartesian galaxy list.
+	free(cartGals);
+
+	// Update the number of galaxies.
+	*numGals = sum;
+
+	return trimmedGals;
+}
+
+/*
 galaxy *trimGalaxyList(galaxy *gals, int *numGals){
 	// Read in the specifications for trimming the galaxies.
 	FILE *fp;
@@ -163,3 +212,4 @@ galaxy *trimGalaxyList(galaxy *gals, int *numGals){
 
 	return trimmedGals;
 }
+*/

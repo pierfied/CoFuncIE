@@ -19,9 +19,10 @@ LIBS =
 
 $(EXEC): $(OBJS)
 	$(CC) $(OBJS) $(LIBS) -o $(EXEC) $(OFLAGS)
-	rm $(OBJS)
+	mv $(OBJS) Objects/
 
 .PHONY: clean
 
 clean:
-	rm -f $(OBJS) $(EXEC) *~
+	-rm -f $(OBJS) $(EXEC) *~
+	-rm Objects/*.o

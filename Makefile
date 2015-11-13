@@ -2,11 +2,11 @@ EXEC = main.cfie
 
 OBJS = main.o data_handler.o cosmology.o
 
-CC = icc
+CC = gcc
 
-CFLAGS = -openmp -lm
+CFLAGS = 
 
-OFLAGS = -openmp -lm
+OFLAGS = -lm
 
 INCL = 
 

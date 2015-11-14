@@ -1,13 +1,13 @@
 EXEC = main.cfie
 
-OBJS = main.o data_handler.o cosmology.o density_map.o
+OBJS = main.o data_handler.o cosmology.o density_map.o map_likelihood.o
 
 ifdef COMPILER
 ifeq ($(COMPILER),intel)
 $(info Using intel compiler.)
 CC = icc
 CFLAGS = -openmp
-OFLAGS = -openmp -lm
+OFLAGS = -openmp -lpthread -lm
 endif
 else
 CC = gcc
@@ -15,9 +15,10 @@ CFLAGS = -fopenmp
 OFLAGS = -fopenmp -lm
 endif
 
-INCL = 
+INCL = -I./gsl/include/
 
-LIBS = 
+LIBS = -lgsl -lgslcblas -L./gsl/lib -L$(MKLROOT)/lib/intel64 -lmkl_intel_lp64\
+ -lmkl_intel_thread -lmkl_core
 
 .SUFFIXES:.c.o
 

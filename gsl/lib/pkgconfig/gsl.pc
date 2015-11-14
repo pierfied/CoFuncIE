@@ -1,0 +1,11 @@
+prefix=/home/pierfied/CoFuncIE/gsl
+exec_prefix=/home/pierfied/CoFuncIE/gsl
+libdir=/home/pierfied/CoFuncIE/gsl/lib
+includedir=/home/pierfied/CoFuncIE/gsl/include
+GSL_CBLAS_LIB=-lgslcblas
+
+Name: GSL
+Description: GNU Scientific Library
+Version: 1.16
+Libs: -L/home/pierfied/CoFuncIE/gsl/lib -lgsl ${GSL_CBLAS_LIB} -lm -lm 
+Cflags: -I/home/pierfied/CoFuncIE/gsl/include

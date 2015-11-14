@@ -2,6 +2,7 @@
 #include "data_handler.h"
 #include "galaxy_structs.h"
 #include "density_map.h"
+#include "map_likelihood.h"
 
 int main(){
 	int numGals;
@@ -51,6 +52,40 @@ int main(){
 
 	for(i = 0; i < numVoxelsPerDim; i++){
 		printf("%f\n", *(voxels+i));
+	}
+
+	// Declare and initialize the xi samples.
+	int numSamps = 5;
+	double rSamp[] = {0, 250, 500, 750, 1000};
+	double xiSamp[] = {1, 0.7, 0.4, 0.1, 0.01};
+
+	gsl_spline *spline = initCorrSpline(numSamps, rSamp, xiSamp);
+
+	double *cov = generateCov(numVoxelsPerDim, boxLength, spline);
+
+	FILE *fp;
+	fp = fopen("Catalogues/cov.txt", "w");
+	int n = pow(numVoxelsPerDim, 3);
+	for(i = 0; i < n; i++){
+		int j;
+		for(j = 0; j < n; j++){
+			int index = i + n*j;
+			fprintf(fp, "%e ", *(cov + index));
+		}
+		fprintf(fp, "\n");
+	}
+
+	double *invCov = invertCov(cov, numVoxelsPerDim);
+
+	fp = fopen("Catalogues/inv_cov.txt", "w");
+	n = pow(numVoxelsPerDim, 3);
+	for(i = 0; i < n; i++){
+		int j;
+		for(j = 0; j < n; j++){
+			int index = i + n*j;
+			fprintf(fp, "%e ", *(cov + index));
+		}
+		fprintf(fp, "\n");
 	}
 
 

@@ -47,4 +47,10 @@ int main(){
 		trimmedGals++;
 	}
 	fclose(fp);
+
+	/* TODO: Make initial map */
+
+	/* TODO: Pass to driver */
+
+	/* TODO: Write information to files */
 }

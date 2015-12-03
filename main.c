@@ -41,23 +41,24 @@ int main(){
 	int xStart = 600;
 	int yStart = 0;
 	int zStart = 0;
-	int numVoxelsPerDim = 12;
+	int numVoxelsPerDim = 10;
 	int boxLength = 400;
 
 	galaxy *trimmedGals = trimGalaxyList(gals, &numGals, xStart, yStart,
 		zStart, boxLength);
 
-	double *voxels = generateMap(trimmedGals, numGals, numVoxelsPerDim,
-		xStart, yStart, zStart, boxLength);
+	int *voxels;
+	double *map = generateMap(trimmedGals, numGals, numVoxelsPerDim,
+		xStart, yStart, zStart, boxLength, &voxels);
 
 	for(i = 0; i < numVoxelsPerDim; i++){
-		printf("%f\n", *(voxels+i));
+		printf("%f\n", *(map+i));
 	}
 
 	// Declare and initialize the xi samples.
 	int numSamps = 5;
 	double rSamp[] = {0, 250, 500, 750, 1000};
-	double xiSamp[] = {1, 0.7, 0.4, 0.1, 0.01};
+	double xiSamp[] = {0.1, 0.25, 0.5, 0.75, 1};
 
 	gsl_spline *spline = initCorrSpline(numSamps, rSamp, xiSamp);
 
@@ -75,6 +76,7 @@ int main(){
 		fprintf(fp, "\n");
 	}
 
+	printf("HERE\n%f\n", *cov);
 	double *invCov = invertCov(cov, numVoxelsPerDim);
 
 	fp = fopen("Catalogues/inv_cov.txt", "w");
@@ -87,6 +89,11 @@ int main(){
 		}
 		fprintf(fp, "\n");
 	}
+
+	double lnLikeMap = mapLnLikelihood(map, voxels, numVoxelsPerDim,
+		boxLength, spline);
+
+	printf("Likelihood: %f\n", lnLikeMap);
 
 
 	/*

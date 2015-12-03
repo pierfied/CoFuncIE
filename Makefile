@@ -3,16 +3,16 @@ EXEC = main.cfie
 OBJS = main.o data_handler.o cosmology.o density_map.o map_likelihood.o
 
 ifdef COMPILER
-ifeq ($(COMPILER),intel)
-$(info Using intel compiler.)
-CC = icc
-CFLAGS = -openmp
-OFLAGS = -openmp -lpthread -lm
-endif
-else
+ifeq ($(COMPILER),gcc)
 CC = gcc
 CFLAGS = -fopenmp
 OFLAGS = -fopenmp -lm
+endif
+else
+$(info Using intel compiler.)
+CC = icc
+CFLAGS = -O3 -openmp
+OFLAGS = -O3 -openmp -lpthread -lm
 endif
 
 INCL = -I./gsl/include/

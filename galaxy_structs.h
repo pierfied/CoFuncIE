@@ -12,8 +12,8 @@
   namely x, y, and z.
 */
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#ifndef GALSTRUCTS_H
+#define GALSTRUCTS_H
 
 typedef struct{
 	double ra;

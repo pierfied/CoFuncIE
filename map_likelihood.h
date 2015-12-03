@@ -5,6 +5,9 @@
 #ifndef MAP_LIKELIHOOD_H
 #define MAP_LIKELIHOOD_H
 
+double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
+	int boxLength, gsl_spline *spline);
+long factorial(long x);
 double *generateCov(int numVoxelsPerDim, int boxLength,
 	gsl_spline *spline);
 gsl_spline *initCorrSpline(int numSamps, double rSamp[], double xiSamp[]);

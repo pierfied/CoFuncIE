@@ -1,6 +1,111 @@
 #include "map_likelihood.h"
+#include <stdio.h>
 
+#define PI 3.14159265358979323846
 
+double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
+	int boxLength, gsl_spline *spline){
+
+	// Initialize the covariance matrix.
+	int n = pow(numVoxelsPerDim, 3);
+	double *cov = generateCov(numVoxelsPerDim, boxLength, spline);
+	double *invCov = invertCov(cov, numVoxelsPerDim);
+
+	// Calculate the mean values for the lognormal map.
+	double mean = 0;
+	int i,j;
+	for(i = 0; i < n; i++){
+		for(j = 0; j < n; j++){
+			// Calculate the index.
+			int index = i + n*j;
+
+			// Add to the sum.
+			mean += *(cov + index);
+		}
+
+		mean *= 0.5;
+	}
+
+	printf("COV %e\n", *(cov+1111));
+	printf("INV %e\n", *(invCov+1111));
+	printf("mean: %f\n", mean);
+
+	FILE *fp;
+	fp = fopen("tmp2.out", "w");
+	for(i = 0; i < n; i++){
+		for(j = 0; j < n; j++){
+			int index = i + n*j;
+
+			fprintf(fp, "%f\n", *(invCov + index));
+		}
+	}
+	fclose(fp);
+
+	// Calculate the first term.
+	double firstTerm = 0;
+	for(i = 0; i < n; i++){
+		for(j = 0; j < n; j++){
+			// Calculate the index.
+			int index = i + n*j;
+
+			double yi = log(1 + *(map+i));
+			double yj = log(1 + *(map+j));
+
+			if(i == j && yi != yj){
+				printf("WARN\t%d\t%f\t%f\n",i , yi, yj);
+				exit(0);
+			}
+
+			/*double ui = *(means + i);
+			double uj = *(means + j);*/
+			double invQij = *(invCov + index);
+
+			if(index == n*n-1){
+				printf("yi:\t%f\nyj:\t%f\n", yi, yj);
+				printf("invQij\t%f\n", invQij);
+			}
+
+			// Add to the sum.
+			firstTerm += (yi - mean) * invQij * (yj - mean);
+		}
+	}
+	firstTerm *= -0.5;
+
+	// Calculate the second term.
+	double secondTerm = 0;
+	for(i = 0; i < n; i++){
+		secondTerm += log(1/(1+*(map+i)));
+	}
+
+	// Calculate the mean galaxy count.
+	double avgN = 0;
+	for(i = 0; i < n; i++){
+		avgN += *(voxels + i);
+	}
+	avgN /= n;
+
+	// Calculate the third term.
+	double thirdTerm = 0;
+	for(i = 0; i < n; i++){
+		double a = pow(avgN * (1 + *(map + i)), *(voxels + i));
+		double b = -avgN * (1 + *(map + i));
+
+		thirdTerm += log(a) + b - log(factorial(*(map + i)));
+	}
+
+	printf("f: %f\ns: %f\nt: %f\n", firstTerm, secondTerm, thirdTerm);
+
+	return firstTerm + secondTerm + thirdTerm;
+
+}
+
+long factorial(long x){
+	if(x <= 1){
+		return 1;
+	}else{
+		return x * factorial(x-1);
+	}
+}
 
 double *invertCov(double *cov, int numVoxelsPerDim){
 	int n = pow(numVoxelsPerDim, 3);
@@ -8,7 +113,7 @@ double *invertCov(double *cov, int numVoxelsPerDim){
 	// Create the inverse covariance matrix and copy the values into it.
 	double *invCov = malloc(n*n * sizeof(double));
 	int i,j;
-	#pragma omp parallel for
+	#pragma omp parallel for private(j)
 	for(i = 0; i < n; i++){
 		for(j = 0; j < n; j++){
 			int index = i + n*j;
@@ -23,17 +128,17 @@ double *invertCov(double *cov, int numVoxelsPerDim){
 	info = LAPACKE_dpotri(LAPACK_ROW_MAJOR,'U',n,invCov,n);
 
 	// Copy the upper values to the lower diagonal.
-	int x,y;
-	#pragma omp parallel for
+	double *temp = malloc(n*n * sizeof(double));
+	#pragma omp parallel for private(j)
 	for(i = 0; i < n; i++){
 		for(j = 0; j < n; j++){
 			int a = n*i + j;
 			int b = i + n*j;
-			*(invCov + b) = *(invCov + a);
+			*(temp + b) = *(invCov + a);
 		}
 	}
 
-	return invCov;
+	return temp;
 }
 
 double *generateCov(int numVoxelsPerDim, int boxLength,
@@ -53,7 +158,7 @@ double *generateCov(int numVoxelsPerDim, int boxLength,
 	// the distances between them.
 	int x,y,z;
 	int i,j,k;
-	#pragma omp parallel for
+	#pragma omp parallel for private(y,z,i,j,k)
 	for(x = 0; x < numVoxelsPerDim; x++){
 		for(y = 0; y < numVoxelsPerDim; y++){
 			for(z = 0; z < numVoxelsPerDim; z++){
@@ -95,18 +200,21 @@ double *generateCov(int numVoxelsPerDim, int boxLength,
 
     // Loop through each value in the distance matrix
     // and calculate the covariance matrix.
-    int index;
-    double r, Qij;
-    #pragma omp parallel for
+    #pragma omp parallel for private(j)
     for(i = 0; i < n; i++){
     	for(j = 0; j < n; j++){
     		// Get the value of r at the current location.
-    		index = i + n*j;
-    		r = *(dists + index);
+    		int index = i + n*j;
+    		double r = *(dists + index);
 
     		// Calculate and set the value of the covariance
     		// matrix at the current location.
-    		*(cov + index) = log(1 + gsl_spline_eval(spline, r, acc));
+    		//*(cov + index) = log(1 + gsl_spline_eval(spline, r, acc));
+    		if(i == j){
+    			*(cov + index) = log(2);
+    		}else{
+    			*(cov + index) = log(1 + pow(r/(10./0.7),-2));
+    		}
     	}
     }
 

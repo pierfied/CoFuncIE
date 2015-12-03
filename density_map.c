@@ -1,10 +1,10 @@
 #include "density_map.h"
 
 double *generateMap(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
-	int yStart, int zStart, int boxLength){
+	int yStart, int zStart, int boxLength, int **voxels){
 
 	// Allocate the voxel array.
-	double *voxels = calloc(pow(numVoxelsPerDim, 3), sizeof(double));
+	*voxels = calloc(pow(numVoxelsPerDim, 3), sizeof(int));
 
 	// Convert the galaxy list to cartesian coordinates.
 	cartesianGalaxy *cartGals = convertToCartesian(gals, numGals);
@@ -27,15 +27,16 @@ double *generateMap(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
 
 		// Increment the voxel at this location.
 		#pragma omp critical
-			(*(voxels + index))++;
+			(*(*voxels + index))++;
 	}
 
 	// Loop through each voxel and calculate the contrasts.
 	double p0 = numGals/pow(numVoxelsPerDim, 3);
+	double *map = calloc(pow(numVoxelsPerDim, 3), sizeof(double));
 	#pragma omp parallel for
 	for(ind = 0; ind < (int)pow(numVoxelsPerDim, 3); ind++){
-		*(voxels+ind) = (*(voxels+ind) - p0)/p0;
+		*(map+ind) = (*(*voxels+ind) - p0)/p0;
 	}
 
-	return voxels;
+	return map;
 }

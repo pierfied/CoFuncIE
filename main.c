@@ -90,6 +90,18 @@ int main(){
 
 	printf("Likelihood: %f\n", lnLikeMap);
 
+	// Create a uniform map to test the likelihood.
+	for(i = 0; i < n; i++){
+		*(map+i) = 0;
+		*(voxels+i) = 10;
+	}
+
+	// Calculate the likelihood of the flat map.
+	lnLikeMap = mapLnLikelihood(map, voxels, numVoxelsPerDim, boxLength,
+		spline);
+
+	printf("Flat Map Ln Likelihood: %f\n", lnLikeMap);
+
 
 	/*
 	FILE *fp;

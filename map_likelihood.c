@@ -21,9 +21,14 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 			// Add to the sum.
 			mean += *(cov + index);
 		}
-
-		mean *= 0.5;
 	}
+	mean *= 0.5;
+
+
+	
+	printf("Mean: %f\n", mean);
+	//exit(0);
+	
 
 	// Calculate the first term.
 	double firstTerm = 0;

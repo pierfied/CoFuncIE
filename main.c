@@ -51,10 +51,6 @@ int main(){
 	double *map = generateMap(trimmedGals, numGals, numVoxelsPerDim,
 		xStart, yStart, zStart, boxLength, &voxels);
 
-	for(i = 0; i < numVoxelsPerDim; i++){
-		printf("%f\n", *(map+i));
-	}
-
 	// Declare and initialize the xi samples.
 	int numSamps = 5;
 	double rSamp[] = {0, 250, 500, 750, 1000};
@@ -76,7 +72,6 @@ int main(){
 		fprintf(fp, "\n");
 	}
 
-	printf("HERE\n%f\n", *cov);
 	double *invCov = invertCov(cov, numVoxelsPerDim);
 
 	fp = fopen("Catalogues/inv_cov.txt", "w");

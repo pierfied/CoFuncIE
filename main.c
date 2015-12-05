@@ -60,6 +60,11 @@ int main(){
 
 	double *cov = generateCov(numVoxelsPerDim, boxLength, spline);
 
+	for(i = 0; i < 10; i++){
+		printf("%f\n", exp(*(cov+i))-1);
+	}
+	//exit(0);
+
 	FILE *fp;
 	fp = fopen("Catalogues/cov.txt", "w");
 	int n = pow(numVoxelsPerDim, 3);
@@ -93,7 +98,7 @@ int main(){
 	// Create a uniform map to test the likelihood.
 	for(i = 0; i < n; i++){
 		*(map+i) = 0;
-		*(voxels+i) = 10;
+		*(voxels+i) = 4;
 	}
 
 	// Calculate the likelihood of the flat map.

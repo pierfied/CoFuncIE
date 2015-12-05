@@ -10,28 +10,12 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	double *cov = generateCov(numVoxelsPerDim, boxLength, spline);
 	double *invCov = invertCov(cov, numVoxelsPerDim);
 
-	// Calculate the mean values for the lognormal map.
-	double mean = 0;
-	int i,j;
-	for(i = 0; i < n; i++){
-		for(j = 0; j < n; j++){
-			// Calculate the index.
-			int index = i + n*j;
-
-			// Add to the sum.
-			mean += *(cov + index);
-		}
-	}
-	mean *= 0.5;
-
-
-	
-	printf("Mean: %f\n", mean);
-	//exit(0);
-	
+	// Calculate the mean value for the lognormal map.
+	double mean = log(1) - 0.5*(*cov);	
 
 	// Calculate the first term.
 	double firstTerm = 0;
+	int i,j;
 	for(i = 0; i < n; i++){
 		for(j = 0; j < n; j++){
 			// Calculate the index.
@@ -64,21 +48,28 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	// Calculate the third term.
 	double thirdTerm = 0;
 	for(i = 0; i < n; i++){
-		double a = pow(avgN * (1 + *(map + i)), *(voxels + i));
-		double b = -avgN * (1 + *(map + i));
+		double R = 1;
+		int Nk = *(voxels + i);
+		double lambdak = avgN * (1 + *(map+i));
 
-		thirdTerm += log(a) + b - log(factorial(*(map + i)));
+		thirdTerm += Nk*log(lambdak) - lambdak - lnfactorial(Nk);
 	}
 
-	return firstTerm + secondTerm + thirdTerm;
+	//printf("ft: %f\tst: %f\ttt: %f\n", firstTerm, secondTerm, thirdTerm);
 
+	return firstTerm + secondTerm + thirdTerm;
 }
 
-long factorial(long x){
+double lnfactorial(int x){
 	if(x <= 1){
-		return 1;
+		return 0;
 	}else{
-		return x * factorial(x-1);
+		double lnfac = 0;
+		while(x > 1){
+			lnfac += log(x--);
+		}
+
+		return lnfac;
 	}
 }
 

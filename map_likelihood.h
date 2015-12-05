@@ -7,7 +7,7 @@
 
 double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	int boxLength, gsl_spline *spline);
-long factorial(long x);
+double lnfactorial(int x);
 double *generateCov(int numVoxelsPerDim, int boxLength,
 	gsl_spline *spline);
 gsl_spline *initCorrSpline(int numSamps, double rSamp[], double xiSamp[]);

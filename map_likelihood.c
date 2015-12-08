@@ -11,7 +11,7 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	double *invCov = invertCov(cov, numVoxelsPerDim);
 
 	// Calculate the mean value for the lognormal map.
-	double mean = log(1) - 0.5*(*cov);	
+	double mean = -0.5*(*cov);
 
 	// Calculate the first term.
 	double firstTerm = 0;
@@ -54,8 +54,6 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 
 		thirdTerm += Nk*log(lambdak) - lambdak - lnfactorial(Nk);
 	}
-
-	//printf("ft: %f\tst: %f\ttt: %f\n", firstTerm, secondTerm, thirdTerm);
 
 	return firstTerm + secondTerm + thirdTerm;
 }

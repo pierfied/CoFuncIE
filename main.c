@@ -3,6 +3,7 @@
 #include "galaxy_structs.h"
 #include "density_map.h"
 #include "map_likelihood.h"
+#include "hamiltonian.h"
 
 int main(){
 	int numGals;
@@ -107,6 +108,30 @@ int main(){
 
 	printf("Flat Map Ln Likelihood: %f\n", lnLikeMap);
 
+	// Calculate the mass matrix.
+	double *M;
+	M = generateMassMatDiag(invCov, voxels, numVoxelsPerDim);
+	printf("M = %f\n", M[0]);
+	printf("M = %f\n", M[12]);
+	printf("M = %f\n", M[122]);
+	printf("M = %f\n", M[555]);
+	printf("M = %f\n\n\n", M[n-1]);
+
+	double *invM;
+	invM = invertDiagMat(M, numVoxelsPerDim);
+	M = invM;
+	printf("M = %f\n", M[0]);
+	printf("M = %f\n", M[12]);
+	printf("M = %f\n", M[122]);
+	printf("M = %f\n", M[555]);
+	printf("M = %f\n\n\n", M[n-1]);
+
+	double *p;
+	p = generateMomenta(numVoxelsPerDim);
+
+	for(i = 0; i < 10; i++){
+		printf("p = %f\n", p[i]);
+	}
 
 	/*
 	FILE *fp;

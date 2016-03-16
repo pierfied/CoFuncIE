@@ -9,13 +9,11 @@ double *modifyMap(double *cov, double *invCov, double *map, int *voxels,
 	M = generateMassMatDiag(invCov, voxels, numVoxelsPerDim);
 	invM = invertDiagMat(M, numVoxelsPerDim);
 
-	// Generate a random number of steps to take and a random stepsize
-	// between 0 and 2.
+	// Generate a random number of steps so that the total is of order
+	// one for the given dt.
 	srand((unsigned)time(NULL));
-	int n = 1e4;//*((double)rand()/(double)RAND_MAX);
-	double epsilon = 1e-2;//*((double)rand()/(double)RAND_MAX);
-
-	printf("n = %d\ne = %f\n", n, epsilon);
+	int n = 1e2*(0.8 + 0.4*((double)rand()/(double)RAND_MAX));
+	double epsilon = 1e-2;
 
 	// Create a new map, which will be called r (position vector).
 	// Copy values of the original map into this one.
@@ -63,19 +61,12 @@ double *modifyMap(double *cov, double *invCov, double *map, int *voxels,
 
 	// Create the new map.
 	double *newMap = malloc(numVoxels * sizeof(double));
-	double sum = 0;
 	for(i = 0; i < numVoxels; i++){
 		newMap[i] = exp(r[i]) - 1;
-		sum += newMap[i];
-		if(fabs(r[i]) > 10 || r[i]!=r[i]){
-			printf("Warning i = %d\tr = %f\tp = %f\tmap = %d\n", i, r[i], p[i], voxels[i]);
-		}
 	}
-	//printf("Average: %f\n", sum/m);
 
 	// Free up unused variables.
 	free(r);
-	//free(grad);
 
 	return newMap;
 }
@@ -147,15 +138,18 @@ double springForce(double *x, int ind, void *params){
 }
 
 double potentialForce(double *x, int ind, void *params){
+	// Declare necessary variables.
 	double mean, avgN, *invCov;
 	int *voxels, numVoxels;
 
+	// Set the variables to the values held in the parameter struct.
 	mean = ((potentialParams*)params)->mean;
 	invCov = ((potentialParams*)params)->invCov;
 	voxels = ((potentialParams*)params)->voxels;
 	numVoxels = ((potentialParams*)params)->numVoxels;
 	avgN = ((potentialParams*)params)->avgN;
 
+	// Calculate the total first term.
 	double firstTerm = 0;
 	int i;
 	for(i = 0; i < numVoxels; i++){
@@ -165,56 +159,10 @@ double potentialForce(double *x, int ind, void *params){
 	}
 	firstTerm *= -1;
 
+	// Calculate the total second term.
 	double secondTerm = voxels[ind] - avgN * exp(x[ind]);
 
-	//*****************************************************
-	if(ind == 0){
-		double *map = malloc(sizeof(double)*numVoxels);
-		for(i = 0; i < numVoxels; i++){
-			map[i] = exp(x[i]) - 1;
-		}
-
-		int numSamps = 5;
-		double rSamp[] = {0, 250, 500, 750, 1000};
-		double xiSamp[] = {0.1, 0.25, 0.5, 0.75, 1};
-
-		gsl_spline *spline = initCorrSpline(numSamps, rSamp, xiSamp);
-
-		double lnLikeMap = mapLnLikelihood(map, voxels, 10, 400,
-			spline);
-
-		FILE *fp;
-		fp = fopen("hamilton2_long.csv","a");
-
-		fprintf(fp, "%f, ", lnLikeMap);
-
-		free(spline);
-		free(map);
-		fclose(fp);
-	}
-	if(ind == -1){
-		FILE *fp;
-		fp = fopen("likelihood.txt","a");
-
-		double *map = malloc(sizeof(double)*numVoxels);
-		for(i = 0; i < numVoxels; i++){
-			map[i] = exp(x[i]) - 1;
-		}
-
-		int numSamps = 5;
-		double rSamp[] = {0, 250, 500, 750, 1000};
-		double xiSamp[] = {0.1, 0.25, 0.5, 0.75, 1};
-
-		gsl_spline *spline = initCorrSpline(numSamps, rSamp, xiSamp);
-
-		double lnLikeMap = mapLnLikelihood(map, voxels, 10, 400,
-			spline);
-
-		fprintf(fp, "%f\n", lnLikeMap);
-
-		fclose(fp);
-	}
-
+	// Combine the terms and return.
 	return (firstTerm + secondTerm);
 }
 
@@ -224,64 +172,24 @@ void leapfrogIntegrator(double *x, double *p, double *M, int numBodies,
 
 	// Perform the first half-step in momenta.
 	int i;
+	#pragma omp parallel for
 	for(i = 0; i < numBodies; i++){
 		p[i] += 0.5 * epsilon * (*force)(x, i, params);
 	}
-	printf("\n");
-
-	FILE *fp;
-	fp = fopen("hamilton2_long.csv", "w");
-	fclose(fp);
 	
 	// Loop through each step.
 	for(i = 0; i < numSteps; i++){
-		printf("%d\n",i);
 		// Perform the full-step in position for all bodies.
 		int j;
+		#pragma omp parallel for
 		for(j = 0; j < numBodies; j++){
 			x[j] += epsilon * p[j] / M[j];
 		}
 
-		double *halfP = malloc(sizeof(double) * numBodies);
-
 		// Perform the full-step in momentum for all bodies.
+		#pragma omp parallel for
 		for(j = 0; j < numBodies; j++){
-			double tmp = (*force)(x,j,params);
-
-			// Calculate the k
-			halfP[j] = p[j] + epsilon*0.5*tmp;
-
-			p[j] += epsilon * tmp;
-			//p[j] += epsilon * (*force)(x, j, params);
+			p[j] += epsilon * (*force)(x, j, params);
 		}
-
-		// Calculate the kinetic energy.
-		fp = fopen("hamilton2_long.csv","a");
-		double kineticTerm = 0;
-		for(j = 0; j < numBodies; j++){
-			kineticTerm += pow(halfP[j],2)/M[j];
-		}
-		kineticTerm /= 2;
-		fprintf(fp,"%f, %f, %f\n", kineticTerm,x[0],p[0]);
-		fclose(fp);
-
-		free(halfP);
-
-		if(i % 100 == -1){
-			for(j = 0; j < numBodies; j++){
-				p[j] = 0;
-			}
-		}
-
-		/*
-		// Print the position and momentum at the current timestep for all M<0.
-		fprintf(fp, "%f", i*epsilon);
-		for(j = 0; j < numBodies; j++){
-			if(1 > 0){
-				fprintf(fp, ",%f,%f,%f", M[j], x[j], p[j]);
-			}
-		}
-		fprintf(fp, "\n");
-		*/
 	}
 }

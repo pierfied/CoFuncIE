@@ -4,8 +4,11 @@
 #include "density_map.h"
 #include "map_likelihood.h"
 #include "hamiltonian.h"
+#include "omp.h"
 
 int main(){
+
+	omp_set_num_threads(16);
 
 	/*double x = 1, p = 0, M = 1, epsilon = 0.1;
 	int N = 1, n = 1000;
@@ -37,6 +40,8 @@ int main(){
 	leapfrogIntegrator(x, p, M, N, n, epsilon, force, &params);
 
 	exit(0);*/
+
+
 
 	int numGals;
 	galaxy *gals = readData(&numGals);

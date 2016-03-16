@@ -35,7 +35,11 @@ double *generateMap(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
 	double *map = calloc(pow(numVoxelsPerDim, 3), sizeof(double));
 	#pragma omp parallel for
 	for(ind = 0; ind < (int)pow(numVoxelsPerDim, 3); ind++){
-		*(map+ind) = (*(*voxels+ind) - p0)/p0;
+		if((*voxels)[ind] == 0){
+			map[ind] = -0.9;
+		}else{
+			*(map+ind) = (*(*voxels+ind) - p0)/p0;
+		}
 	}
 
 	return map;

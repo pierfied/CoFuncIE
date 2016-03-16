@@ -6,15 +6,48 @@
 #include "hamiltonian.h"
 
 int main(){
+
+	/*double x = 1, p = 0, M = 1, epsilon = 0.1;
+	int N = 1, n = 1000;
+	double (*force)(double,int,void*);
+	force = &springForce;
+	hoParams params;
+	params.k = 1;
+
+	leapfrogIntegrator(&x, &p, &M, N, n, epsilon, force, &params);*/
+
+	/*
+	double x[10], p[10], M[10], k[10];
+	double epsilon = 0.1;
+	int N = 10, n = 1000;
+	hoParams params;
+	double (*force)(double*,int,void*);
+	force = &springForce;
+
+	int i;
+	for(i = 0; i < N; i++){
+		x[i] = 1;
+		p[i] = 0;
+		M[i] = 1;
+		k[i] = i;
+	}
+
+	params.k = k;
+
+	leapfrogIntegrator(x, p, M, N, n, epsilon, force, &params);
+
+	exit(0);*/
+
 	int numGals;
 	galaxy *gals = readData(&numGals);
 
 	printf("%d\n", numGals);
 
 	cartesianGalaxy *cartGals = convertToCartesian(gals, numGals);
+	
 
-	int i;/*
-	for(i = 0; i < 10; i++){
+	int i;
+	/*for(i = 0; i < 10; i++){
 		printf("x: %e\ty: %e\tz: %e\n", cartGals->x, cartGals->y, cartGals->z);
 		cartGals++;
 	}
@@ -32,7 +65,7 @@ int main(){
 	printf("Max: %e\nMin: %e\nAvg: %e\n", maxZ, minZ, avgZ/numGals);*/
 
 	//galaxy *newGals = convertFromCartesian(cartGals,gals,numGals);
-
+	
 	double *r, *z;
 	int numInterpPts;
 	setupRedshiftInterp(&r, &z, &numInterpPts);
@@ -47,6 +80,8 @@ int main(){
 
 	galaxy *trimmedGals = trimGalaxyList(gals, &numGals, xStart, yStart,
 		zStart, boxLength);
+
+	printf("Here!\n");
 
 	int *voxels;
 	double *map = generateMap(trimmedGals, numGals, numVoxelsPerDim,
@@ -95,6 +130,15 @@ int main(){
 		boxLength, spline);
 
 	printf("Likelihood: %f\n", lnLikeMap);
+
+	map = modifyMap(cov, invCov, map, voxels, numVoxelsPerDim);
+
+	lnLikeMap = mapLnLikelihood(map, voxels, numVoxelsPerDim,
+		boxLength, spline);
+
+	printf("Likelihood: %f\n", lnLikeMap);
+
+	exit(0);
 
 	// Create a uniform map to test the likelihood.
 	for(i = 0; i < n; i++){

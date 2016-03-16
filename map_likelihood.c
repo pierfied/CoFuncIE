@@ -28,6 +28,16 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 
 			// Add to the sum.
 			firstTerm += (yi - mean) * invQij * (yj - mean);
+			if(firstTerm != firstTerm){
+				printf("NAN1\n");
+				printf("i = %d\tj = %d\n", i , j);
+				printf("firstTerm = %f, %f, %f\n", (yi - mean), invQij, (yj - mean));
+				printf("yi = %f\n", yi);
+				printf("yj = %f\n", yj);
+				printf("mapi = %f\n", map[i]);
+				printf("mapj = %f\n", map[j]);
+				exit(0);
+			}
 		}
 	}
 	firstTerm *= -0.5;
@@ -36,6 +46,10 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	double secondTerm = 0;
 	for(i = 0; i < n; i++){
 		secondTerm += log(1/(1+*(map+i)));
+		if(secondTerm != secondTerm){
+			printf("NAN2\n");
+			exit(0);
+		}
 	}
 
 	// Calculate the mean galaxy count.
@@ -53,7 +67,15 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 		double lambdak = avgN * (1 + *(map+i));
 
 		thirdTerm += Nk*log(lambdak) - lambdak - lnfactorial(Nk);
+
+		if(thirdTerm != thirdTerm){
+			printf("NAN3\n");
+			exit(0);
+		}
 	}
+
+	free(cov);
+	free(invCov);
 
 	return firstTerm + secondTerm + thirdTerm;
 }
@@ -177,6 +199,9 @@ double *generateCov(int numVoxelsPerDim, int boxLength,
     		}
     	}
     }
+
+    free(acc);
+    free(dists);
 
     return cov;
 }

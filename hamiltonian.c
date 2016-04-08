@@ -113,7 +113,7 @@ double *generateMomenta(int numVoxelsPerDim){
   	gsl_rng_env_setup();
 	T = gsl_rng_default;
 	r = gsl_rng_alloc(T);
-	gsl_rng_set(r, 1);//time(NULL)); // Set an initial seed of 0.
+	gsl_rng_set(r, time(NULL)); // Set an initial seed to the current time.
 
 	// Allocate the space for the momenta.
 	int n = pow(numVoxelsPerDim, 3);

@@ -42,17 +42,6 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	}
 	firstTerm *= -0.5;
 
-	// Calculate the second term.
-	double secondTerm = 0;
-	/*
-	for(i = 0; i < n; i++){
-		secondTerm += log(1/(1+*(map+i)));
-		if(secondTerm != secondTerm){
-			printf("NAN2\n");
-			exit(0);
-		}
-	}*/
-
 	// Calculate the mean galaxy count.
 	double avgN = 0;
 	for(i = 0; i < n; i++){
@@ -61,15 +50,15 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	avgN /= n;
 
 	// Calculate the third term.
-	double thirdTerm = 0;
+	double secondTerm = 0;
 	for(i = 0; i < n; i++){
 		double R = 1;
 		int Nk = *(voxels + i);
 		double lambdak = avgN * (1 + *(map+i));
 
-		thirdTerm += Nk*log(lambdak) - lambdak - lnfactorial(Nk);
+		secondTerm += Nk*log(lambdak) - lambdak - lnfactorial(Nk);
 
-		if(thirdTerm != thirdTerm){
+		if(secondTerm != secondTerm){
 			printf("NAN3\n");
 			exit(0);
 		}
@@ -78,7 +67,7 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 	free(cov);
 	free(invCov);
 
-	return firstTerm + secondTerm + thirdTerm;
+	return firstTerm + secondTerm;
 }
 
 double lnfactorial(int x){

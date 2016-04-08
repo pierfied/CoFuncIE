@@ -149,21 +149,20 @@ double potentialForce(double *x, int ind, void *params){
 	numVoxels = ((potentialParams*)params)->numVoxels;
 	avgN = ((potentialParams*)params)->avgN;
 
-	// Calculate the total first term.
-	double firstTerm = 0;
 	int i;
+	// Calculate the first term of the force.
+	double force = 0;
 	for(i = 0; i < numVoxels; i++){
+		// Get the index for the invcov.
 		int index = ind + numVoxels*i;
 
-		firstTerm += invCov[index]*(x[ind] - mean);
+		force += -invCov[index]*(x[i] - mean);
 	}
-	firstTerm *= -1;
 
-	// Calculate the total second term.
-	double secondTerm = voxels[ind] - avgN * exp(x[ind]);
+	// Calculate the second term of the force.
+	force += voxels[ind] - avgN*exp(x[ind]);
 
-	// Combine the terms and return.
-	return (firstTerm + secondTerm);
+	return force;
 }
 
 void leapfrogIntegrator(double *x, double *p, double *M, int numBodies,

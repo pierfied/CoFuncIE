@@ -44,13 +44,14 @@ double mapLnLikelihood(double *map, int *voxels, int numVoxelsPerDim,
 
 	// Calculate the second term.
 	double secondTerm = 0;
+	/*
 	for(i = 0; i < n; i++){
 		secondTerm += log(1/(1+*(map+i)));
 		if(secondTerm != secondTerm){
 			printf("NAN2\n");
 			exit(0);
 		}
-	}
+	}*/
 
 	// Calculate the mean galaxy count.
 	double avgN = 0;

@@ -5,6 +5,7 @@
 #include "map_likelihood.h"
 #include "hamiltonian.h"
 #include "omp.h"
+#include "radial_likelihood.h"
 
 int main(){
 
@@ -88,9 +89,99 @@ int main(){
 
 	printf("Here!\n");
 
+	galaxy *gal2 = trimmedGals+10000;
+	cartesianGalaxy *gal = convertToCartesian(gal2, 1);
+	printf("x: %f\ty: %f\tz: %f\n", gal->x, gal->y, gal->z);
+
 	int *voxels;
 	double *map = generateMap(trimmedGals, numGals, numVoxelsPerDim,
 		xStart, yStart, zStart, boxLength, &voxels);
+
+	double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
+
+	printf("r: %f\n", dist);
+
+	double xUnit = gal->x/dist;
+	double yUnit = gal->y/dist;
+	double zUnit = gal->z/dist;
+
+	printf("x: %f\ty: %f\tz: %f\n", xUnit, yUnit, zUnit);
+
+	double Mo = cosmo_M;
+	double k = cosmo_k;
+	double lambda = cosmo_lambda;
+	double h = cosmo_h;
+	double Dh = 3000/h; // [Mpc]
+
+	double Ez = 1./sqrt(Mo*pow(1+gal2->z_red,3)
+		       + k*pow(1+gal2->z_red,2) + lambda);
+
+	double sigR = Dh*Ez*gal2->z_err;
+
+	printf("sz: %f\tsr: %f\n", gal2->z_err, sigR);
+
+	FILE *fp1;
+	fp1 = fopen("radialLikelihood","w");
+
+	int resoultion = 100;
+
+	double *fMap = fineMap(map, numVoxelsPerDim, resoultion);
+
+	double R;
+	double sum = 0;
+	for(R = 1; R < 1500; R++){
+		double x = R * xUnit;
+		double y = R * yUnit;
+		double z = R * zUnit;
+
+		if(x < xStart || x > xStart + boxLength || y < yStart ||
+			yStart > yStart + boxLength || z < zStart || 
+			z > zStart + boxLength){
+			continue;
+		}
+
+		double voxelLength = boxLength/numVoxelsPerDim/(double)resoultion;
+
+		int a = (x - xStart)/voxelLength;
+		int b = (y - yStart)/voxelLength;
+		int c = (z - zStart)/voxelLength;
+		int index = a + numVoxelsPerDim*resoultion*b + pow(numVoxelsPerDim*resoultion, 2)*c;
+
+		double gaussR = 1/(sigR * sqrt(2*3.14159)) * exp(-0.5*pow((R-dist)/sigR,2));
+
+		double mapyStuff = (1+fMap[index]);
+
+		sum += gaussR;
+
+		printf("gauss(R = %f) = %f\tsum = %f\t1+delta = %f\n", R, gaussR, sum, mapyStuff);
+		fprintf(fp1,"%f,%f,%f\n",R,gaussR, mapyStuff);
+
+		//printf("x: %f\ty: %f\tz: %f\tR: %f\n", x, y, z, R);
+	}
+	fclose(fp1);
+
+	FILE *fp2;
+	fp2 = fopen("fine","w");
+	int woop;
+	for(i = 0; i < numVoxelsPerDim*resoultion; i++){
+		for(woop = 0; woop < numVoxelsPerDim*resoultion; woop++){
+			int ind = i + woop*numVoxelsPerDim*resoultion;
+			fprintf(fp2,"%f,",fMap[ind]);
+		}
+		fprintf(fp2, "\n");
+	}
+
+	FILE *fp3;
+	fp3 = fopen("coarse","w");
+	for(i = 0; i < numVoxelsPerDim; i++){
+		for(woop = 0; woop < numVoxelsPerDim; woop++){
+			int ind = i + woop*numVoxelsPerDim;
+			fprintf(fp3,"%f,",map[ind]);
+		}
+		fprintf(fp3, "\n");
+	}
+
+	exit(0);
 
 	// Declare and initialize the xi samples.
 	int numSamps = 5;

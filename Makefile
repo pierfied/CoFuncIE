@@ -1,6 +1,6 @@
 EXEC = main.cfie
 
-OBJS = main.o data_handler.o cosmology.o density_map.o map_likelihood.o hamiltonian.o
+OBJS = main.o data_handler.o cosmology.o density_map.o map_likelihood.o hamiltonian.o radial_likelihood.o
 
 ifdef COMPILER
 ifeq ($(COMPILER),gcc)

@@ -123,7 +123,7 @@ int main(){
 	FILE *fp1;
 	fp1 = fopen("radialLikelihood","w");
 
-	int resoultion = 100;
+	int resoultion = 10;
 
 	double *fMap = fineMap(map, numVoxelsPerDim, resoultion);
 
@@ -165,7 +165,8 @@ int main(){
 	int woop;
 	for(i = 0; i < numVoxelsPerDim*resoultion; i++){
 		for(woop = 0; woop < numVoxelsPerDim*resoultion; woop++){
-			int ind = i + woop*numVoxelsPerDim*resoultion;
+			int ind = i + woop*numVoxelsPerDim*resoultion
+				+ 10*pow(numVoxelsPerDim*resoultion,2);
 			fprintf(fp2,"%f,",fMap[ind]);
 		}
 		fprintf(fp2, "\n");
@@ -175,10 +176,36 @@ int main(){
 	fp3 = fopen("coarse","w");
 	for(i = 0; i < numVoxelsPerDim; i++){
 		for(woop = 0; woop < numVoxelsPerDim; woop++){
-			int ind = i + woop*numVoxelsPerDim;
+			int ind = i + woop*numVoxelsPerDim + pow(numVoxelsPerDim,2);
 			fprintf(fp3,"%f,",map[ind]);
 		}
 		fprintf(fp3, "\n");
+	}
+
+	FILE *fp4;
+	FILE *fp5;
+	fp4 = fopen("fMap","w");
+	fp5 = fopen("cMap","w");
+	int a;
+	for( a = 0; a < numVoxelsPerDim*resoultion; a++){
+		int b;
+		for(b = 0; b < numVoxelsPerDim*resoultion; b++){
+			int c;
+			for(c = 0; c < numVoxelsPerDim*resoultion; c++){
+				int ind = a + b*numVoxelsPerDim*resoultion
+					+ c*pow(numVoxelsPerDim*resoultion,2);
+
+				int coarsex = a/resoultion;
+				int coarsey = b/resoultion;
+				int coarsez = c/resoultion;
+
+				int coarseind = coarsex + coarsey*numVoxelsPerDim
+					+ coarsez*pow(numVoxelsPerDim,2);
+
+				fprintf(fp4,"%d,%d,%d,%f\n",a,b,c,fMap[ind]);
+				fprintf(fp5,"%d,%d,%d,%f\n",a,b,c,map[coarseind]);
+			}
+		}
 	}
 
 	exit(0);

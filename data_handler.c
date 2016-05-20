@@ -77,7 +77,8 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 		(cartGals+i)->z = r * cos(theta);
 
 		// Calculate the radial distance error.
-		(cartGals+i)->r_err = comovingDistErr(gals+i);
+		(cartGals+i)->r_err = comovingDistErr((gals+i)->z_photo,
+			(gals+i)->z_err);
 	}
 
 	return cartGals;

@@ -7,6 +7,44 @@
 #include "omp.h"
 #include "radial_likelihood.h"
 
+void printMap(double *map, int numVPD, int runNum){
+	char fName[100];
+	sprintf(fName, "Map%d.csv", runNum);
+
+	FILE *fp;
+	fp = fopen(fName,"w");
+
+	int i;
+	for(i = 0; i < numVPD; i++){
+		int j;
+		for(j = 0; j < numVPD; j++){
+			int k;
+			for(k = 0; k < numVPD; k++){
+				int index = i + j*numVPD + k*pow(numVPD,2);
+
+				fprintf(fp, "%d,%d,%d,%f\n", i, j, k, map[index]);
+			}
+		}
+	}
+
+	fclose(fp);
+}
+
+void printGals(galaxy *gals, int numGals, int runNum){
+	char fName[100];
+	sprintf(fName, "Gals%d.csv", runNum);
+
+	FILE *fp;
+	fp = fopen(fName,"w");
+
+	int i;
+	for(i = 0; i < numGals; i++){
+		fprintf(fp, "%f,%f,%f\n", (gals+i)->ra, (gals+i)->dec, (gals+i)->z);
+	}
+
+	fclose(fp);
+}
+
 int main(){
 
 	omp_set_num_threads(16);
@@ -124,7 +162,29 @@ int main(){
 	md.boxLengthY = boxLength;
 	md.boxLengthZ = boxLength;
 
-	drawGalRSamps(trimmedGals, numGals, md);
+	int numSamps2 = 5;
+	double rSamp2[] = {0, 250, 500, 750, 1000};
+	double xiSamp2[] = {0.1, 0.25, 0.5, 0.75, 1};
+
+	gsl_spline *spline2 = initCorrSpline(numSamps2, rSamp2, xiSamp2);
+
+	double *cov2 = generateCov(numVoxelsPerDim, boxLength, spline2);
+
+	double *invCov2 = invertCov(cov2, numVoxelsPerDim);
+
+	for(i = 0; i < 2; i++){
+		map = modifyMap(cov2, invCov2, map, voxels, numVoxelsPerDim);
+
+		printf("Modified Map %d\n",i);
+
+		printMap(map,numVoxelsPerDim,i);
+
+		drawGalRSamps(trimmedGals, numGals, md);
+
+		printf("Sampled Redshifts %d\n",i);
+
+		printGals(trimmedGals, numGals, i);
+	}
 
 	/*double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
 

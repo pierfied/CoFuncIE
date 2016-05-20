@@ -161,9 +161,6 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 	double pdf[maxR];
 	double cdf[maxR];
 
-	//FILE *fp;
-	//fp = fopen("rlike.txt","w");
-
 	// Initialize the normalization constant for the pdf.
 	double normConst = 0;
 
@@ -219,20 +216,7 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 		// Simply store the current r in the radius array (used for
 		// drawing from the cdf later).
 		y[r] = r;
-
-		//fprintf(fp,"%d,%f,%f\n",r,pdf[r],cdf[r]);
 	}
-
-	/*
-	printf("Photo-z R: %f\n", dist);
-
-	int i;
-	for(i = 0; i < 10; i++){
-		double rSamp = drawFromCDF(cdf,y,maxR);
-		printf("Random R Sample: %f\n", rSamp);
-	}
-
-	exit(0);*/
 
 	double rSamp = drawFromCDF(cdf,y,maxR);
 

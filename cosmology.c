@@ -36,7 +36,7 @@ double comovingDistance(double z){
 	return Dh * sum;
 }
 
-double comovingDistErr(galaxy *gal){
+double comovingDistErr(double z, double zErr){
 	// Define various cosmological constants.
 	double M = cosmo_M;
 	double k = cosmo_k;
@@ -45,11 +45,10 @@ double comovingDistErr(galaxy *gal){
 	double Dh = 3000/h; // [Mpc]
 
 	// Calculate the Ez term from the comoving distance calculation.
-	double Ez = 1./sqrt(M*pow(1+gal->z_photo,3)
-		       + k*pow(1+gal->z_photo,2) + lambda);
+	double Ez = 1./sqrt(M*pow(1+z,3) + k*pow(1+z,2) + lambda);
 
 	// Calculate the error on the radial distance.
-	double sigR = Dh*Ez*gal->z_err;
+	double sigR = Dh*Ez*zErr;
 
 	return sigR;
 }

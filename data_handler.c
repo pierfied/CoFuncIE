@@ -60,8 +60,8 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 	#pragma omp parallel for
 	for(i = 0; i < numGals; i++){
 		// Convert ra and dec.
-		double phi = (gals+i)->ra * (PI/180);
-		double theta = PI/2.0 - (gals+i)->dec * (PI/180);
+		double phi = (gals+i)->ra * (PI/180.0);
+		double theta = PI/2.0 - (gals+i)->dec * (PI/180.0);
 
 		// Calculate the line of sight distance.
 		double r = interpDist((gals+i)->z_red, rs, zs, numInterpPts);
@@ -70,6 +70,9 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 		(cartGals+i)->x = r * sin(theta) * cos(phi);
 		(cartGals+i)->y = r * sin(theta) * sin(phi);
 		(cartGals+i)->z = r * cos(theta);
+
+		// Calculate the radial distance error.
+		(cartGals+i)->r_err = comovingDistErr(gals+i);
 	}
 
 	return cartGals;

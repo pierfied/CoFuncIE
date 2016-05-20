@@ -1,5 +1,7 @@
 #include "radial_likelihood.h"
 
+#define PI 3.14159265359
+
 double *fineMap(double *map, int numVoxelsPerDim, int resoultion){
 	// Calculate the number of voxels per dimension in the new resolution.
 	int newNumVPD = numVoxelsPerDim * resoultion;
@@ -105,4 +107,113 @@ double trilInterp(double *map, int numVoxelsPerDim, int resoultion,
 	double c = c0*(1-zd) + c1*zd;
 
 	return c;
+}
+
+double drawRSample(galaxy *gal, mapData md){
+	int resolution = 10;
+	double *fMap = fineMap(md.map, md.numVoxelsX, resolution);
+
+	cartesianGalaxy *cGal = convertToCartesian(gal, 1);
+	double dist = sqrt(cGal->x*cGal->x + cGal->y*cGal->y + cGal->z*cGal->z);
+
+	double sigR = cGal->r_err;
+
+	double xUnit = cGal->x/dist;
+	double yUnit = cGal->y/dist;
+	double zUnit = cGal->z/dist;
+
+	int xStart = md.xStart;
+	int yStart = md.yStart;
+	int zStart = md.zStart;
+
+	int numVoxelsX = md.numVoxelsX;
+	int numVoxelsY = md.numVoxelsY;
+	int numVoxelsZ = md.numVoxelsZ;
+
+	int boxLengthX = md.boxLengthX;
+	int boxLengthY = md.boxLengthY;
+	int boxLengthZ = md.boxLengthZ;
+
+	double voxelLengthX = boxLengthX/(double)(numVoxelsX*resolution);
+	double voxelLengthY = boxLengthY/(double)(numVoxelsY*resolution);
+	double voxelLengthZ = boxLengthZ/(double)(numVoxelsZ*resolution);
+
+	double fineNVPDX = numVoxelsX*resolution;
+	double fineNVPDY = numVoxelsY*resolution;
+	double fineNVPDZ = numVoxelsZ*resolution;
+
+	int maxR = 1500;
+
+	double pdf[maxR];
+	double cdf[maxR];
+
+	FILE *fp;
+	fp = fopen("rlike.txt","w");
+
+	double normConst = 0;
+
+	int r;
+	for(r = 0; r < maxR; r++){
+		double x = r * xUnit;
+		double y = r * yUnit;
+		double z = r * zUnit;
+
+		double gaussR = 1/(sigR * sqrt(2*PI)) * exp(-0.5*pow((r-dist)/sigR,2));
+
+		if(x < xStart || x > xStart + boxLengthX || y < yStart ||
+			y > yStart + boxLengthY || z < zStart || 
+			z > zStart + boxLengthZ){
+
+			pdf[r] = gaussR;
+		}else{
+			int a = (x - xStart)/voxelLengthX;
+			int b = (y - yStart)/voxelLengthY;
+			int c = (z - zStart)/voxelLengthZ;
+			int index = a + fineNVPDY*b + pow(fineNVPDZ, 2)*c;
+
+			double mapTerm = 1 + fMap[index];
+
+			pdf[r] = gaussR * mapTerm;
+		}
+
+		normConst += pdf[r];
+	}
+
+	double y[maxR];
+	double prevCDF = 0;
+	for(r = 0; r < maxR; r++){
+		pdf[r] /= normConst;
+		cdf[r] = prevCDF + pdf[r];
+
+		prevCDF = cdf[r];
+
+		y[r] = r;
+
+		fprintf(fp,"%d,%f,%f\n",r,pdf[r],cdf[r]);
+	}
+
+	printf("Photo-z R: %f\n", dist);
+
+	int i;
+	for(i = 0; i < 10; i++){
+		double rSamp = drawFromCDF(cdf,y,maxR);
+		printf("Random R Sample: %f\n", rSamp);
+	}
+
+	exit(0);
+
+	return 0;
+}
+
+double drawFromCDF(double cdf[], double x[], int numPts){
+	double rnd = ((double)rand()/(double)RAND_MAX);;
+
+	int i;
+	for(i = 0; i < numPts-1; i++){
+		if(cdf[i] < rnd && rnd < cdf[i+1]){
+			return x[i] + (x[i+1]-x[i])*(rnd-cdf[i])/(cdf[i+1]-cdf[i]);
+		}
+	}
+
+	return x[numPts-1];
 }

@@ -87,6 +87,21 @@ int main(){
 	galaxy *trimmedGals = trimGalaxyList(gals, &numGals, xStart, yStart,
 		zStart, boxLength);
 
+	int wob;
+	double maxZ = 0;
+	double minZ = 10;
+	for(wob = 0; wob < numGals; wob++){
+		if(trimmedGals[wob].z_red > maxZ){
+			maxZ = trimmedGals[wob].z_red;
+		}
+
+		if(trimmedGals[wob].z_red < minZ){
+			minZ = trimmedGals[wob].z_red;
+		}
+	}
+
+	printf("Min z: %f\nMax z: %f\n", minZ, maxZ);
+
 	printf("Here!\n");
 
 	galaxy *gal2 = trimmedGals+10000;
@@ -96,6 +111,20 @@ int main(){
 	int *voxels;
 	double *map = generateMap(trimmedGals, numGals, numVoxelsPerDim,
 		xStart, yStart, zStart, boxLength, &voxels);
+
+	mapData md;
+	md.map = map;
+	md.xStart = xStart;
+	md.yStart = yStart;
+	md.zStart = zStart;
+	md.numVoxelsX = numVoxelsPerDim;
+	md.numVoxelsY = numVoxelsPerDim;
+	md.numVoxelsZ = numVoxelsPerDim;
+	md.boxLengthX = boxLength;
+	md.boxLengthY = boxLength;
+	md.boxLengthZ = boxLength;
+
+	drawRSample(gal2, md);
 
 	double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
 
@@ -135,12 +164,12 @@ int main(){
 		double z = R * zUnit;
 
 		if(x < xStart || x > xStart + boxLength || y < yStart ||
-			yStart > yStart + boxLength || z < zStart || 
+			y > yStart + boxLength || z < zStart || 
 			z > zStart + boxLength){
 			continue;
 		}
 
-		double voxelLength = boxLength/numVoxelsPerDim/(double)resoultion;
+		double voxelLength = boxLength/(double)(numVoxelsPerDim*resoultion);
 
 		int a = (x - xStart)/voxelLength;
 		int b = (y - yStart)/voxelLength;
@@ -152,6 +181,12 @@ int main(){
 		double mapyStuff = (1+fMap[index]);
 
 		sum += gaussR;
+
+		int coarsex = a/resoultion;
+		int coarsey = b/resoultion;
+		int coarsez = c/resoultion;
+
+		//printf("%d %d %d %f\n", coarsex, coarsey, coarsez, mapyStuff);
 
 		printf("gauss(R = %f) = %f\tsum = %f\t1+delta = %f\n", R, gaussR, sum, mapyStuff);
 		fprintf(fp1,"%f,%f,%f\n",R,gaussR, mapyStuff);

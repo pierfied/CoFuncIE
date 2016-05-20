@@ -9,4 +9,20 @@
 double *generateMap(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
 	int yStart, int zStart, int boxLength, int **voxels);
 
+typedef struct{
+	double *map;
+
+	int xStart;
+	int yStart;
+	int zStart;
+
+	int numVoxelsX;
+	int numVoxelsY;
+	int numVoxelsZ;
+
+	int boxLengthX;
+	int boxLengthY;
+	int boxLengthZ;
+} mapData;
+
 #endif

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "galaxy_structs.h"
 
 #ifndef COSMOLOGY_H
 #define COSMOLOGY_H
@@ -20,6 +21,7 @@
 #define cosmo_h 0.7
 
 double comovingDistance(double z);
+double comovingDistErr(galaxy *gal);
 void setupRedshiftInterp(double* *r, double* *z, int* numInterpPts);
 double interpRedshift(double rQuery, double* r, double* z, int numInterpPts);
 double interpDist(double zQuery, double* r, double* z, int numInterpPts);

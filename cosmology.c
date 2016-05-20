@@ -36,6 +36,22 @@ double comovingDistance(double z){
 	return Dh * sum;
 }
 
+double comovingDistErr(galaxy *gal){
+	// Define various cosmological constants.
+	double M = cosmo_M;
+	double k = cosmo_k;
+	double lambda = cosmo_lambda;
+	double h = cosmo_h;
+	double Dh = 3000/h; // [Mpc]
+
+	double Ez = 1./sqrt(M*pow(1+gal->z_red,3)
+		       + k*pow(1+gal->z_red,2) + lambda);
+
+	double sigR = Dh*Ez*gal->z_err;
+
+	return sigR;
+}
+
 void setupRedshiftInterp(double **r, double **z, int *numInterpPts){
 	// Define various parameters.
 	*numInterpPts = 101;

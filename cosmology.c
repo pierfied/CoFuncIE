@@ -45,8 +45,8 @@ double comovingDistErr(galaxy *gal){
 	double Dh = 3000/h; // [Mpc]
 
 	// Calculate the Ez term from the comoving distance calculation.
-	double Ez = 1./sqrt(M*pow(1+gal->z_red,3)
-		       + k*pow(1+gal->z_red,2) + lambda);
+	double Ez = 1./sqrt(M*pow(1+gal->z_photo,3)
+		       + k*pow(1+gal->z_photo,2) + lambda);
 
 	// Calculate the error on the radial distance.
 	double sigR = Dh*Ez*gal->z_err;

@@ -91,12 +91,12 @@ int main(){
 	double maxZ = 0;
 	double minZ = 10;
 	for(wob = 0; wob < numGals; wob++){
-		if(trimmedGals[wob].z_red > maxZ){
-			maxZ = trimmedGals[wob].z_red;
+		if(trimmedGals[wob].z > maxZ){
+			maxZ = trimmedGals[wob].z;
 		}
 
-		if(trimmedGals[wob].z_red < minZ){
-			minZ = trimmedGals[wob].z_red;
+		if(trimmedGals[wob].z < minZ){
+			minZ = trimmedGals[wob].z;
 		}
 	}
 
@@ -124,9 +124,9 @@ int main(){
 	md.boxLengthY = boxLength;
 	md.boxLengthZ = boxLength;
 
-	drawRSample(gal2, md);
+	drawGalRSamps(trimmedGals, numGals, md);
 
-	double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
+	/*double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
 
 	printf("r: %f\n", dist);
 
@@ -241,7 +241,7 @@ int main(){
 				fprintf(fp5,"%d,%d,%d,%f\n",a,b,c,map[coarseind]);
 			}
 		}
-	}
+	}*/
 
 	exit(0);
 

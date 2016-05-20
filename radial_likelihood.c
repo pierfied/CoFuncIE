@@ -109,15 +109,16 @@ double trilInterp(double *map, int numVoxelsPerDim, int resoultion,
 	return c;
 }
 
-double drawRSample(galaxy *gal, mapData md){
+double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 	// Create a fine version of the density contrast map using trilinear
 	// interpolation.
-	int resolution = 10;
-	double *fMap = fineMap(md.map, md.numVoxelsX, resolution);
+	//int resolution = 10;
+	//double *fMap = fineMap(md.map, md.numVoxelsX, resolution);
 
 	// Convert the galaxy of interest into cartesian coordinates and calculate
 	// the radial distance.
 	cartesianGalaxy *cGal = convertToCartesian(gal, 1);
+	double rPhoto = cGal->r_photo;
 	double dist = sqrt(cGal->x*cGal->x + cGal->y*cGal->y + cGal->z*cGal->z);
 
 	// Get radial distance error from the photo-z.
@@ -160,14 +161,15 @@ double drawRSample(galaxy *gal, mapData md){
 	double pdf[maxR];
 	double cdf[maxR];
 
-	FILE *fp;
-	fp = fopen("rlike.txt","w");
+	//FILE *fp;
+	//fp = fopen("rlike.txt","w");
 
 	// Initialize the normalization constant for the pdf.
 	double normConst = 0;
 
 	// Loop over all radial distances of interest.
 	int r;
+	#pragma omp parallel for
 	for(r = 0; r < maxR; r++){
 		// Caluclate the x, y, and z values for the given radius.
 		double x = r * xUnit;
@@ -175,7 +177,7 @@ double drawRSample(galaxy *gal, mapData md){
 		double z = r * zUnit;
 
 		// Calculate the gaussian term from the photo-z.
-		double gaussR = 1/(sigR * sqrt(2*PI)) * exp(-0.5*pow((r-dist)/sigR,2));
+		double gaussR = 1/(sigR * sqrt(2*PI)) * exp(-0.5*pow((r-rPhoto)/sigR,2));
 
 		// Check whether the point of interest is within the box or not.
 		if(x < xStart || x > xStart + boxLengthX || y < yStart ||
@@ -218,9 +220,10 @@ double drawRSample(galaxy *gal, mapData md){
 		// drawing from the cdf later).
 		y[r] = r;
 
-		fprintf(fp,"%d,%f,%f\n",r,pdf[r],cdf[r]);
+		//fprintf(fp,"%d,%f,%f\n",r,pdf[r],cdf[r]);
 	}
 
+	/*
 	printf("Photo-z R: %f\n", dist);
 
 	int i;
@@ -229,9 +232,11 @@ double drawRSample(galaxy *gal, mapData md){
 		printf("Random R Sample: %f\n", rSamp);
 	}
 
-	exit(0);
+	exit(0);*/
 
-	return 0;
+	double rSamp = drawFromCDF(cdf,y,maxR);
+
+	return rSamp;
 }
 
 double drawFromCDF(double cdf[], double x[], int numPts){
@@ -252,4 +257,34 @@ double drawFromCDF(double cdf[], double x[], int numPts){
 
 	// If no value was found within the bounds, use the final point.
 	return x[numPts-1];
+}
+
+void drawGalRSamps(galaxy *gals, int numGals, mapData md){
+	int numInterpPts;
+	double *r;
+	double *z;
+	setupRedshiftInterp(&r, &z, &numInterpPts);
+
+	printf("Num Gals: %d\n", numGals);
+
+	// Create a fine version of the density contrast map using trilinear
+	// interpolation.
+	int resolution = 10;
+	double *fMap = fineMap(md.map, md.numVoxelsX, resolution);
+
+	int i;
+	#pragma omp parallel for
+	for(i = 0; i < numGals; i++){
+		//printf("%d\n", i);
+
+		double rSamp = drawRSample(gals+i, md, fMap, resolution);
+
+		double zSamp = interpRedshift(rSamp, r, z, numInterpPts);
+
+		(gals+i)->z = zSamp;
+	}
+
+	free(fMap);
+
+	printf("Finished with new redshift samples.\n");
 }

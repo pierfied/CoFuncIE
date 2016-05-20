@@ -18,7 +18,8 @@
 typedef struct{
 	double ra;
 	double dec;
-	double z_red;
+	double z;
+  double z_photo;
 	double z_err;
 } galaxy;
 
@@ -26,6 +27,7 @@ typedef struct {
 	double x;
 	double y;
 	double z;
+  double r_photo;
   double r_err;
 } cartesianGalaxy;
 

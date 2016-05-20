@@ -35,7 +35,10 @@ galaxy *readData(int *numGals){
 	galaxy *curGal = gals;
 	for(i = 0; i < *numGals; i++){
 		fscanf(fp, "%le, %le, %le, %le", &(curGal->ra), &(curGal->dec),
-			&(curGal->z_red), &(curGal->z_err));
+			&(curGal->z_photo), &(curGal->z_err));
+
+		curGal->z = curGal->z_photo;
+
 		curGal++;
 	}
 	fclose(fp);
@@ -64,7 +67,9 @@ cartesianGalaxy *convertToCartesian(galaxy *gals, int numGals){
 		double theta = PI/2.0 - (gals+i)->dec * (PI/180.0);
 
 		// Calculate the line of sight distance.
-		double r = interpDist((gals+i)->z_red, rs, zs, numInterpPts);
+		double r = interpDist((gals+i)->z, rs, zs, numInterpPts);
+		double rPhoto = interpDist((gals+i)->z_photo, rs, zs, numInterpPts);
+		(cartGals+i)->r_photo = rPhoto;
 
 		// Set the x, y, and z coordinates.
 		(cartGals+i)->x = r * sin(theta) * cos(phi);
@@ -104,7 +109,8 @@ galaxy *convertFromCartesian(cartesianGalaxy *cartGals, galaxy *origGals,
 		// Set the values for ra, dec, and z.
 		(gals+i)->ra = (origGals+i)->ra;
 		(gals+i)->dec = (origGals+i)->dec;
-		(gals+i)->z_red = interpRedshift(r, rs, zs, numInterpPts);
+		(gals+i)->z = interpRedshift(r, rs, zs, numInterpPts);
+		(gals+i)->z_photo = (origGals+i)->z_photo;
 		(gals+i)->z_err = (origGals+i)->z_err;
 	}
 
@@ -144,7 +150,8 @@ galaxy *trimGalaxyList(galaxy *gals, int *numGals, int xStart, int yStart,
 		if(*(index+i)){
 			curGal->ra = (gals+i)->ra;
 			curGal->dec = (gals+i)->dec;
-			curGal->z_red = (gals+i)->z_red;
+			curGal->z_photo = (gals+i)->z_photo;
+			curGal->z = (gals+i)->z;
 			curGal->z_err = (gals+i)->z_err;
 			curGal++;
 		}

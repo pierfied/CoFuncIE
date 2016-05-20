@@ -110,83 +110,112 @@ double trilInterp(double *map, int numVoxelsPerDim, int resoultion,
 }
 
 double drawRSample(galaxy *gal, mapData md){
+	// Create a fine version of the density contrast map using trilinear
+	// interpolation.
 	int resolution = 10;
 	double *fMap = fineMap(md.map, md.numVoxelsX, resolution);
 
+	// Convert the galaxy of interest into cartesian coordinates and calculate
+	// the radial distance.
 	cartesianGalaxy *cGal = convertToCartesian(gal, 1);
 	double dist = sqrt(cGal->x*cGal->x + cGal->y*cGal->y + cGal->z*cGal->z);
 
+	// Get radial distance error from the photo-z.
 	double sigR = cGal->r_err;
 
+	// Calculate the unit vector components of the galaxy position.
 	double xUnit = cGal->x/dist;
 	double yUnit = cGal->y/dist;
 	double zUnit = cGal->z/dist;
 
+	// Get the offsets of the box.
 	int xStart = md.xStart;
 	int yStart = md.yStart;
 	int zStart = md.zStart;
 
+	// Get the number of voxels in each direction.
 	int numVoxelsX = md.numVoxelsX;
 	int numVoxelsY = md.numVoxelsY;
 	int numVoxelsZ = md.numVoxelsZ;
 
+	// Get the length of the box in each direction.
 	int boxLengthX = md.boxLengthX;
 	int boxLengthY = md.boxLengthY;
 	int boxLengthZ = md.boxLengthZ;
 
+	// Calculate the length of each voxel (should be the same FIX!!!!).
 	double voxelLengthX = boxLengthX/(double)(numVoxelsX*resolution);
 	double voxelLengthY = boxLengthY/(double)(numVoxelsY*resolution);
 	double voxelLengthZ = boxLengthZ/(double)(numVoxelsZ*resolution);
 
+	// Calculate the number of voxels in each direction in the fine map.
 	double fineNVPDX = numVoxelsX*resolution;
 	double fineNVPDY = numVoxelsY*resolution;
 	double fineNVPDZ = numVoxelsZ*resolution;
 
+	// Set the maximum radial distance to calculate out to.
 	int maxR = 1500;
 
+	// Allocate the pdf and cdf arrays.
 	double pdf[maxR];
 	double cdf[maxR];
 
 	FILE *fp;
 	fp = fopen("rlike.txt","w");
 
+	// Initialize the normalization constant for the pdf.
 	double normConst = 0;
 
+	// Loop over all radial distances of interest.
 	int r;
 	for(r = 0; r < maxR; r++){
+		// Caluclate the x, y, and z values for the given radius.
 		double x = r * xUnit;
 		double y = r * yUnit;
 		double z = r * zUnit;
 
+		// Calculate the gaussian term from the photo-z.
 		double gaussR = 1/(sigR * sqrt(2*PI)) * exp(-0.5*pow((r-dist)/sigR,2));
 
+		// Check whether the point of interest is within the box or not.
 		if(x < xStart || x > xStart + boxLengthX || y < yStart ||
 			y > yStart + boxLengthY || z < zStart || 
 			z > zStart + boxLengthZ){
 
+			// Assume that the delta map is zero outside the box. Therefore,
+			// the pdf is only the gaussian term.
 			pdf[r] = gaussR;
 		}else{
+			// Calculate the index location in the fine map.
 			int a = (x - xStart)/voxelLengthX;
 			int b = (y - yStart)/voxelLengthY;
 			int c = (z - zStart)/voxelLengthZ;
 			int index = a + fineNVPDY*b + pow(fineNVPDZ, 2)*c;
 
+			// Calculate the map term (1+delta)
 			double mapTerm = 1 + fMap[index];
 
+			// Calculate the pdf at the given radius.
 			pdf[r] = gaussR * mapTerm;
 		}
 
+		// Add to the normalization constant sum.
 		normConst += pdf[r];
 	}
 
+	// Declare the radius array.
 	double y[maxR];
 	double prevCDF = 0;
 	for(r = 0; r < maxR; r++){
+		// Normalize the current pdf value and set the cdf at the current r.
 		pdf[r] /= normConst;
 		cdf[r] = prevCDF + pdf[r];
 
+		// Store the cdf at the current r.
 		prevCDF = cdf[r];
 
+		// Simply store the current r in the radius array (used for
+		// drawing from the cdf later).
 		y[r] = r;
 
 		fprintf(fp,"%d,%f,%f\n",r,pdf[r],cdf[r]);
@@ -206,14 +235,21 @@ double drawRSample(galaxy *gal, mapData md){
 }
 
 double drawFromCDF(double cdf[], double x[], int numPts){
+	// Generate a random number between zero and one.
 	double rnd = ((double)rand()/(double)RAND_MAX);;
 
+	// Loop through the CDF values.
 	int i;
 	for(i = 0; i < numPts-1; i++){
+		// Check if the random value is between the current cdf value
+		// and the next.
 		if(cdf[i] < rnd && rnd < cdf[i+1]){
+			// Perform linear interpolation between the points and return
+			// the corresponding x value.
 			return x[i] + (x[i+1]-x[i])*(rnd-cdf[i])/(cdf[i+1]-cdf[i]);
 		}
 	}
 
+	// If no value was found within the bounds, use the final point.
 	return x[numPts-1];
 }

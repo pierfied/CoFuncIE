@@ -109,7 +109,7 @@ double trilInterp(double *map, int numVoxelsPerDim, int resoultion,
 	return c;
 }
 
-double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
+double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution, int n){
 	// Create a fine version of the density contrast map using trilinear
 	// interpolation.
 	//int resolution = 10;
@@ -161,6 +161,8 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 	double pdf[maxR];
 	double cdf[maxR];
 
+	double dMap[maxR];
+
 	// Initialize the normalization constant for the pdf.
 	double normConst = 0;
 
@@ -184,6 +186,8 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 			// Assume that the delta map is zero outside the box. Therefore,
 			// the pdf is only the gaussian term.
 			pdf[r] = gaussR;
+
+			dMap[r] = 0;
 		}else{
 			// Calculate the index location in the fine map.
 			int a = (x - xStart)/voxelLengthX;
@@ -196,10 +200,18 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 
 			// Calculate the pdf at the given radius.
 			pdf[r] = gaussR * mapTerm;
+
+			dMap[r] = mapTerm;
 		}
 
 		// Add to the normalization constant sum.
 		normConst += pdf[r];
+	}
+
+	FILE *fp;
+
+	if(n == 10000){
+		fp = fopen("LOS.csv","a");
 	}
 
 	// Declare the radius array.
@@ -216,11 +228,58 @@ double drawRSample(galaxy *gal, mapData md, double *fMap, int resolution){
 		// Simply store the current r in the radius array (used for
 		// drawing from the cdf later).
 		y[r] = r;
+
+		if(n == 10000){
+			fprintf(fp, "%f", dMap[r]);
+			if(r < maxR-1){
+				fprintf(fp, ",");
+			}
+		}
 	}
 
-	double rSamp = drawFromCDF(cdf,y,maxR);
+	if(n == 10000){
+		fprintf(fp, "\n");
+		fclose(fp);
+	}
+
+	//double rSamp = drawFromCDF(cdf,y,maxR);
+	double rSamp = drawFromCDFPDF(cdf,pdf,dist,y,maxR);
 
 	return rSamp;
+}
+
+double drawFromCDFPDF(double cdf[], double pdf[], double curR, double x[], int numPts){
+	// Generate a random number between zero and one.
+	double rnd = ((double)rand()/(double)RAND_MAX);
+
+	double rTry = curR;
+
+	int curRi = (int) curR;
+
+	double pi = pdf[curRi] + (pdf[curRi+1]-pdf[curRi])*(curR-curRi);
+	double pf = pi;
+
+	// Loop through the CDF values.
+	int i;
+	for(i = 0; i < numPts-1; i++){
+		// Check if the random value is between the current cdf value
+		// and the next.
+		if(cdf[i] < rnd && rnd < cdf[i+1]){
+			rTry = x[i] + (x[i+1]-x[i])*(rnd-cdf[i])/(cdf[i+1]-cdf[i]);
+
+			pf = pdf[i] + (pdf[i+1]-pdf[i])*(rTry-i);
+		}
+	}
+
+	double rnd2 = ((double)rand()/(double)RAND_MAX);
+
+	double a = pf/pi;
+
+	if(a >= 1 || rnd2 < a){
+		return rTry;
+	}
+
+	return curR;
 }
 
 double drawFromCDF(double cdf[], double x[], int numPts){
@@ -261,7 +320,7 @@ void drawGalRSamps(galaxy *gals, int numGals, mapData md){
 	for(i = 0; i < numGals; i++){
 		//printf("%d\n", i);
 
-		double rSamp = drawRSample(gals+i, md, fMap, resolution);
+		double rSamp = drawRSample(gals+i, md, fMap, resolution, i);
 
 		double zSamp = interpRedshift(rSamp, r, z, numInterpPts);
 

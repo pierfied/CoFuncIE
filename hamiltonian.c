@@ -1,11 +1,13 @@
 #include "hamiltonian.h"
 
 double *modifyMap(double *cov, double *invCov, double *map, int *voxels,
-	int numVoxelsPerDim){
+	int numVoxelsPerDim, double *p){
 
 	// Generate random momenta and the mass matrix and the inverse.
-	double *p, *M, *invM;
-	p = generateMomenta(numVoxelsPerDim);
+	//double *p, *M, *invM;
+	double *M, *invM;
+	//free(p);
+	//p = generateMomenta(numVoxelsPerDim);
 	M = generateMassMatDiag(invCov, voxels, numVoxelsPerDim);
 	invM = invertDiagMat(M, numVoxelsPerDim);
 
@@ -37,7 +39,7 @@ double *modifyMap(double *cov, double *invCov, double *map, int *voxels,
 	// Set the mass of each voxel equal to the average galaxy count
 	// of the entire survey.
 	for(i = 0; i < numVoxels; i++){
-		p[i] = 0;
+		//p[i] = 0;
 		M[i] = avgN;
 	}
 

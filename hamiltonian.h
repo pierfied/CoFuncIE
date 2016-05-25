@@ -13,7 +13,7 @@ double *invertDiagMat(double *mat, int numVoxelsPerDim);
 double *generateMassMatDiag(double *invCov, int *voxels, int numVoxelsPerDim);
 double *generateMomenta(int numVoxelsPerDim);
 double *modifyMap(double *cov, double *invCov, double *map, int *voxels,
-	int numVoxelsPerDim);
+	int numVoxelsPerDim, double *p);
 double springForce(double *x, int ind, void*);
 double potentialForce(double *x, int ind, void *params);
 void leapfrogIntegrator(double *x, double *p, double *M, int numBodies,

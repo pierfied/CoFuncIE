@@ -8,6 +8,8 @@
 
 double *generateMap(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
 	int yStart, int zStart, int boxLength, int **voxels);
+int *generateNCounts(galaxy *gals, int numGals, int numVoxelsPerDim, int xStart,
+	int yStart, int zStart, int boxLength);
 
 typedef struct{
 	double *map;

@@ -12,7 +12,7 @@ void printMap(double *map, int numVPD, int runNum){
 	sprintf(fName, "Map%d.csv", runNum);
 
 	FILE *fp;
-	fp = fopen(fName,"w");
+	fp = fopen("Map.csv","a");
 
 	int i;
 	for(i = 0; i < numVPD; i++){
@@ -22,10 +22,13 @@ void printMap(double *map, int numVPD, int runNum){
 			for(k = 0; k < numVPD; k++){
 				int index = i + j*numVPD + k*pow(numVPD,2);
 
-				fprintf(fp, "%d,%d,%d,%f\n", i, j, k, map[index]);
+				//fprintf(fp, "%d,%d,%d,%f\n", i, j, k, map[index]);
+				fprintf(fp, "%f ", map[index]);
 			}
 		}
 	}
+
+	fprintf(fp,"\n");
 
 	fclose(fp);
 }
@@ -34,13 +37,26 @@ void printGals(galaxy *gals, int numGals, int runNum){
 	char fName[100];
 	sprintf(fName, "Gals%d.csv", runNum);
 
-	FILE *fp;
-	fp = fopen(fName,"w");
+	cartesianGalaxy *cGals = convertToCartesian((gals+10000),1);
 
+	FILE *fp;
+	fp = fopen("Gals.csv","a");
+
+	/*
 	int i;
 	for(i = 0; i < numGals; i++){
-		fprintf(fp, "%f,%f,%f\n", (gals+i)->ra, (gals+i)->dec, (gals+i)->z);
-	}
+		//fprintf(fp, "%f,%f,%f", (cGals+i)->x, (cGals+i)->y, (cGals+i)->z);
+
+		if(i == numGals-1){
+			fprintf(fp, "\n");
+		}else{
+			fprintf(fp, ",");
+		}
+	}*/
+
+	double r = sqrt(pow(cGals->x,2) + pow(cGals->y,2) + pow(cGals->z,2));
+
+	fprintf(fp, "%f\n", r);
 
 	fclose(fp);
 }
@@ -172,18 +188,32 @@ int main(){
 
 	double *invCov2 = invertCov(cov2, numVoxelsPerDim);
 
-	for(i = 0; i < 2; i++){
-		map = modifyMap(cov2, invCov2, map, voxels, numVoxelsPerDim);
+	double *p;
+	p = generateMomenta(numVoxelsPerDim);
+
+	FILE *f1;
+	f1 = fopen("Map.csv","w");
+	fclose(f1);
+	f1 = fopen("Gals.csv","w");
+	fclose(f1);
+	f1 = fopen("LOS.csv","w");
+	fclose(f1);
+
+	for(i = 0; i < 50; i++){
+		md.map = modifyMap(cov2, invCov2, md.map, voxels, numVoxelsPerDim, p);
 
 		printf("Modified Map %d\n",i);
 
-		printMap(map,numVoxelsPerDim,i);
+		printMap(md.map,numVoxelsPerDim,i);
 
 		drawGalRSamps(trimmedGals, numGals, md);
 
 		printf("Sampled Redshifts %d\n",i);
 
 		printGals(trimmedGals, numGals, i);
+
+		voxels = generateNCounts(trimmedGals, numGals, numVoxelsPerDim, xStart,
+			yStart, zStart, boxLength);
 	}
 
 	/*double dist = sqrt(gal->x*gal->x + gal->y*gal->y + gal->z*gal->z);
@@ -349,7 +379,7 @@ int main(){
 
 	printf("Likelihood: %f\n", lnLikeMap);
 
-	map = modifyMap(cov, invCov, map, voxels, numVoxelsPerDim);
+	map = modifyMap(cov, invCov, map, voxels, numVoxelsPerDim, p);
 
 	lnLikeMap = mapLnLikelihood(map, voxels, numVoxelsPerDim,
 		boxLength, spline);
@@ -388,7 +418,7 @@ int main(){
 	printf("M = %f\n", M[555]);
 	printf("M = %f\n\n\n", M[n-1]);
 
-	double *p;
+	//double *p;
 	p = generateMomenta(numVoxelsPerDim);
 
 	for(i = 0; i < 10; i++){
